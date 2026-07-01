@@ -67,4 +67,4 @@ const TrendingTopics = () => {
   );
 };
 
-export default TrendingTopics;chua
+export default TrendingTopics;

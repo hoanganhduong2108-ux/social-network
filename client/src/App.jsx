@@ -1,20 +1,15 @@
-// ============================================
-// FILE: client/src/App.jsx
-// MÔ TẢ: Component chính, định nghĩa routing và layout
-// ============================================
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import { ThemeProvider } from './context/ThemeContext';
 
-// Import các trang
+// Pages
 import Home from './pages/Home';
 import Explore from './pages/Explore';
 import Watch from './pages/Watch';
 
-// Import các component
+// Components
 import Navbar from './components/common/Navbar';
 import Sidebar from './components/common/Sidebar';
 import Login from './components/auth/Login';
@@ -29,16 +24,12 @@ import Marketplace from './components/marketplace/Marketplace';
 import AdminDashboard from './components/admin/AdminDashboard';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
-// Import hooks
+// Hooks
 import { useAuth } from './hooks/useAuth';
 
-// ============================================
-// Component bảo vệ route - Yêu cầu đăng nhập
-// ============================================
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
-  // Hiển thị loading khi đang kiểm tra xác thực
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -47,17 +38,12 @@ const PrivateRoute = ({ children }) => {
     );
   }
   
-  // Chuyển hướng đến trang đăng nhập nếu chưa xác thực
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-// ============================================
-// Component bảo vệ route Admin - Yêu cầu quyền admin
-// ============================================
 const AdminRoute = ({ children }) => {
   const { user, isAuthenticated, loading } = useAuth();
   
-  // Hiển thị loading khi đang kiểm tra
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -66,12 +52,10 @@ const AdminRoute = ({ children }) => {
     );
   }
   
-  // Chuyển hướng đến đăng nhập nếu chưa xác thực
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
   
-  // Chuyển hướng về trang chủ nếu không có quyền admin
   if (user?.role !== 'admin' && user?.role !== 'super_admin') {
     return <Navigate to="/" />;
   }
@@ -79,18 +63,12 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-// ============================================
-// Layout chính của ứng dụng (có Navbar và Sidebar)
-// ============================================
 const AppLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Thanh điều hướng */}
+    <div className="min-h-screen bg-gray-50">
       <Navbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      
-      {/* Phần nội dung chính với sidebar */}
       <div className="flex pt-16">
         <Sidebar isOpen={sidebarOpen} />
         <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-0'} p-4`}>
@@ -103,27 +81,18 @@ const AppLayout = ({ children }) => {
   );
 };
 
-// ============================================
-// Component App chính
-// ============================================
 function App() {
   return (
-    {/* ErrorBoundary bắt lỗi toàn cục */}
     <ErrorBoundary>
-      {/* Provider cho theme (dark/light mode) */}
       <ThemeProvider>
-        {/* Provider cho xác thực */}
         <AuthProvider>
-          {/* Provider cho WebSocket */}
           <SocketProvider>
-            {/* Định nghĩa các route */}
             <Routes>
-              {/* ===== Các route công khai (không cần đăng nhập) ===== */}
+              {/* Auth Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
-              {/* ===== Các route cần đăng nhập ===== */}
-              {/* Trang chủ */}
+              {/* Protected Routes */}
               <Route path="/" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -132,7 +101,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Trang khám phá */}
               <Route path="/explore" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -141,7 +109,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Trang xem video */}
               <Route path="/watch" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -150,7 +117,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Trang cá nhân */}
               <Route path="/profile/:username?" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -159,7 +125,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Trang tin nhắn */}
               <Route path="/messages" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -167,6 +132,7 @@ function App() {
                   </AppLayout>
                 </PrivateRoute>
               } />
+              
               <Route path="/messages/:userId" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -175,7 +141,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Trang nhóm */}
               <Route path="/groups" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -183,6 +148,7 @@ function App() {
                   </AppLayout>
                 </PrivateRoute>
               } />
+              
               <Route path="/groups/:groupId" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -191,7 +157,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Trang fanpage */}
               <Route path="/pages" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -199,6 +164,7 @@ function App() {
                   </AppLayout>
                 </PrivateRoute>
               } />
+              
               <Route path="/pages/:pageId" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -207,7 +173,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Trang sự kiện */}
               <Route path="/events" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -215,6 +180,7 @@ function App() {
                   </AppLayout>
                 </PrivateRoute>
               } />
+              
               <Route path="/events/:eventId" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -223,7 +189,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Trang thông báo */}
               <Route path="/notifications" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -232,7 +197,6 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* Trang chợ */}
               <Route path="/marketplace" element={
                 <PrivateRoute>
                   <AppLayout>
@@ -241,7 +205,7 @@ function App() {
                 </PrivateRoute>
               } />
               
-              {/* ===== Các route Admin ===== */}
+              {/* Admin Routes */}
               <Route path="/admin" element={
                 <AdminRoute>
                   <AppLayout>
@@ -249,6 +213,7 @@ function App() {
                   </AppLayout>
                 </AdminRoute>
               } />
+              
               <Route path="/admin/*" element={
                 <AdminRoute>
                   <AppLayout>
@@ -257,7 +222,7 @@ function App() {
                 </AdminRoute>
               } />
               
-              {/* ===== Route 404 - Chuyển hướng về trang chủ ===== */}
+              {/* 404 */}
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </SocketProvider>
