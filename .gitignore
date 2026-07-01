@@ -1,0 +1,33 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.env
+.env.local
+.env.production
+
+# Backend
+backend/node_modules/
+backend/.env
+backend/package-lock.json
+
+# Client
+client/node_modules/
+client/dist/
+client/.env.local
+client/package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
