@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/groups/Groups.jsx
+// FILE: src/components/groups/Groups.jsx
 // MÔ TẢ: Trang quản lý và hiển thị nhóm
 // ============================================
 
@@ -19,12 +19,10 @@ const Groups = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Nếu có groupId, hiển thị chi tiết nhóm
   if (groupId) {
     return <GroupDetail groupId={groupId} />;
   }
 
-  // Lấy danh sách nhóm
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -39,10 +37,10 @@ const Groups = () => {
     fetchGroups();
   }, []);
 
-  // Lọc nhóm theo tìm kiếm
-  const filteredGroups = groups.filter(group =>
-    group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredGroups = groups.filter(
+    (group) =>
+      group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      group.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -52,11 +50,10 @@ const Groups = () => {
   return (
     <>
       <Helmet>
-        <title>Nhóm - Social Network</title>
+        <title>Nhóm - VibeSpace</title>
       </Helmet>
 
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -75,7 +72,6 @@ const Groups = () => {
           </button>
         </div>
 
-        {/* Tìm kiếm */}
         <div className="relative mb-6">
           <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
@@ -83,11 +79,10 @@ const Groups = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Tìm kiếm nhóm..."
-            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        {/* Danh sách nhóm */}
         {filteredGroups.length === 0 ? (
           <div className="text-center py-12">
             <FiUsers className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -113,13 +108,20 @@ const Groups = () => {
               >
                 <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden relative">
                   <img
-                    src={group.coverPhoto || group.avatar || 'https://via.placeholder.com/400x200'}
+                    src={
+                      group.coverPhoto ||
+                      group.avatar ||
+                      'https://via.placeholder.com/400x200'
+                    }
                     alt={group.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-2 right-2">
                     <img
-                      src={group.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                      src={
+                        group.avatar ||
+                        'https://ui-avatars.com/api/?background=random&bold=true'
+                      }
                       alt={group.name}
                       className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800"
                     />
@@ -142,7 +144,6 @@ const Groups = () => {
           </div>
         )}
 
-        {/* Modal tạo nhóm */}
         {showCreate && (
           <CreateGroup
             onClose={() => setShowCreate(false)}

@@ -1,6 +1,6 @@
 // ============================================
-// FILE: client/src/components/common/Navbar.jsx
-// MÔ TẢ: Thanh điều hướng chính của ứng dụng
+// FILE: src/components/common/Navbar.jsx
+// MÔ TẢ: Thanh điều hướng chính - DRK (Hỗ trợ Sáng/Tối)
 // ============================================
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -8,13 +8,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import { useNotifications } from '../../hooks/useNotifications';
-import { 
-  FiSearch, 
-  FiHome, 
-  FiUsers, 
-  FiMessageSquare, 
-  FiBell, 
-  FiUser,
+import {
+  FiSearch,
+  FiUser,        // ← Đã thêm FiUser vào import
+  FiUsers,
+  FiMessageSquare,
+  FiBell,
   FiMenu,
   FiLogOut,
   FiMoon,
@@ -22,28 +21,21 @@ import {
   FiSettings,
   FiPlus,
   FiHelpCircle,
+  FiHome,
 } from 'react-icons/fi';
-import { FaFacebook } from 'react-icons/fa';
 
 const Navbar = ({ onToggleSidebar }) => {
-  // ============================================
-  // Khởi tạo các hooks và state
-  // ============================================
-  const { user, logout } = useAuth(); // Hook xác thực
-  const { isDarkMode, toggleTheme } = useTheme(); // Hook theme
-  const { unreadCount } = useNotifications(); // Hook thông báo
+  const { user, logout } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
-  
-  // State quản lý
-  const [searchQuery, setSearchQuery] = useState(''); // Từ khóa tìm kiếm
-  const [showProfileMenu, setShowProfileMenu] = useState(false); // Hiển thị menu profile
-  const [showCreateMenu, setShowCreateMenu] = useState(false); // Hiển thị menu tạo mới
-  const profileMenuRef = useRef(null); // Ref cho menu profile
-  const createMenuRef = useRef(null); // Ref cho menu tạo mới
 
-  // ============================================
-  // Xử lý tìm kiếm
-  // ============================================
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
+  const profileMenuRef = useRef(null);
+  const createMenuRef = useRef(null);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -52,17 +44,26 @@ const Navbar = ({ onToggleSidebar }) => {
     }
   };
 
-  // ============================================
-  // Xử lý đăng xuất
-  // ============================================
   const handleLogout = () => {
     logout();
     setShowProfileMenu(false);
   };
 
-  // ============================================
-  // Xử lý click ra ngoài để đóng menu
-  // ============================================
+  // Xử lý tạo tin nhanh
+  const handleCreateStory = () => {
+    const createStoryBtn = document.querySelector('[data-create-story]');
+    if (createStoryBtn) {
+      createStoryBtn.click();
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        const btn = document.querySelector('[data-create-story]');
+        if (btn) btn.click();
+      }, 500);
+    }
+    setShowCreateMenu(false);
+  };
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
@@ -78,25 +79,34 @@ const Navbar = ({ onToggleSidebar }) => {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-sm z-50 h-16">
+    <nav className="fixed top-0 left-0 right-0 bg-white dark:bg-[#242526] shadow-sm z-50 h-14 border-b border-gray-200 dark:border-[#3E4042] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-        
         {/* ===== PHẦN BÊN TRÁI ===== */}
         <div className="flex items-center gap-2">
-          {/* Nút toggle sidebar (hiện trên mobile) */}
           <button
             onClick={onToggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] lg:hidden transition-colors"
+            aria-label="Toggle sidebar"
           >
-            <FiMenu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+            <FiMenu className="w-6 h-6 text-gray-700 dark:text-white" />
           </button>
-          
-          {/* Logo Facebook */}
-          <Link to="/" className="flex items-center gap-2">
-            <FaFacebook className="w-8 h-8 text-primary-500" />
-            <span className="hidden sm:inline text-xl font-bold text-primary-500">
-              Social
+
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#0866FF] font-black text-white text-2xl transition-transform group-hover:scale-105">
+              M
+            </div>
+            <span className="hidden sm:inline-block font-extrabold text-[22px] text-[#0866FF] tracking-tight">
+              DRK
             </span>
+          </Link>
+
+          {/* Nút Trang chủ (mobile) */}
+          <Link
+            to="/"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors lg:hidden"
+            aria-label="Trang chủ"
+          >
+            <FiHome className="w-5 h-5 text-gray-700 dark:text-white" />
           </Link>
         </div>
 
@@ -104,13 +114,13 @@ const Navbar = ({ onToggleSidebar }) => {
         <div className="hidden md:flex flex-1 max-w-xl mx-4">
           <form onSubmit={handleSearch} className="w-full">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-[#B0B3B8] w-5 h-5" />
               <input
                 type="text"
-                placeholder="Tìm kiếm bạn bè, bài viết, nhóm..."
+                placeholder="Tìm kiếm trên DRK..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
+                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-[#3A3B3C] text-gray-900 dark:text-white rounded-full focus:outline-none focus:ring-2 focus:ring-[#0866FF] transition-all duration-200 placeholder-gray-500 dark:placeholder-[#B0B3B8]"
               />
             </div>
           </form>
@@ -118,31 +128,67 @@ const Navbar = ({ onToggleSidebar }) => {
 
         {/* ===== PHẦN BÊN PHẢI - CÁC ICON ===== */}
         <div className="flex items-center gap-1">
-          {/* Nút tạo bài viết mới */}
+          {/* Nút tạo bài viết mới / Tin nhanh */}
           <div className="relative" ref={createMenuRef}>
             <button
               onClick={() => setShowCreateMenu(!showCreateMenu)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
+              aria-label="Tạo mới"
             >
-              <FiPlus className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+              <FiPlus className="w-6 h-6 text-gray-700 dark:text-white" />
             </button>
-            
-            {/* Menu tạo mới */}
+
             {showCreateMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2">
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3">
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#242526] rounded-xl shadow-lg border border-gray-200 dark:border-[#3E4042] py-2 z-50">
+                <button
+                  onClick={handleCreateStory}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C] flex items-center gap-3 text-gray-700 dark:text-white transition-colors"
+                >
+                  <FiPlus className="w-5 h-5 text-[#0866FF]" />
+                  <span>Tạo tin (Story)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/');
+                    setShowCreateMenu(false);
+                    setTimeout(() => {
+                      const composer = document.querySelector('[data-create-post]');
+                      if (composer) composer.focus();
+                    }, 300);
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C] flex items-center gap-3 text-gray-700 dark:text-white transition-colors"
+                >
                   <FiPlus className="w-5 h-5" />
                   <span>Tạo bài viết</span>
                 </button>
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3">
+                <div className="border-t border-gray-200 dark:border-[#3E4042] my-1"></div>
+                <button
+                  onClick={() => {
+                    navigate('/groups/create');
+                    setShowCreateMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C] flex items-center gap-3 text-gray-700 dark:text-white transition-colors"
+                >
                   <FiUsers className="w-5 h-5" />
                   <span>Tạo nhóm</span>
                 </button>
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    navigate('/events/create');
+                    setShowCreateMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C] flex items-center gap-3 text-gray-700 dark:text-white transition-colors"
+                >
                   <FiPlus className="w-5 h-5" />
                   <span>Tạo sự kiện</span>
                 </button>
-                <button className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    navigate('/pages/create');
+                    setShowCreateMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-[#3A3B3C] flex items-center gap-3 text-gray-700 dark:text-white transition-colors"
+                >
                   <FiPlus className="w-5 h-5" />
                   <span>Tạo trang</span>
                 </button>
@@ -153,31 +199,35 @@ const Navbar = ({ onToggleSidebar }) => {
           {/* Nút chuyển đổi theme */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
+            title={isDarkMode ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
+            aria-label="Chuyển đổi theme"
           >
             {isDarkMode ? (
               <FiSun className="w-6 h-6 text-yellow-500" />
             ) : (
-              <FiMoon className="w-6 h-6 text-gray-600" />
+              <FiMoon className="w-6 h-6 text-gray-700" />
             )}
           </button>
 
           {/* Nút tin nhắn */}
           <Link
             to="/messages"
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors relative"
+            aria-label="Tin nhắn"
           >
-            <FiMessageSquare className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+            <FiMessageSquare className="w-6 h-6 text-gray-700 dark:text-white" />
           </Link>
 
           {/* Nút thông báo */}
           <Link
             to="/notifications"
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors relative"
+            aria-label="Thông báo"
           >
-            <FiBell className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+            <FiBell className="w-6 h-6 text-gray-700 dark:text-white" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -187,61 +237,66 @@ const Navbar = ({ onToggleSidebar }) => {
           <div className="relative" ref={profileMenuRef}>
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
+              aria-label="Profile menu"
             >
               <img
-                src={user?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                src={
+                  user?.avatar ||
+                  'https://ui-avatars.com/api/?background=0866FF&color=fff&bold=true&name=User'
+                }
                 alt={user?.fullName || 'User'}
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-8 h-8 rounded-full object-cover border-2 border-[#0866FF]"
               />
+              <span className="hidden lg:inline text-sm font-medium text-gray-700 dark:text-white max-w-[80px] truncate">
+                {user?.fullName?.split(' ')[0] || 'User'}
+              </span>
             </button>
 
-            {/* Dropdown menu profile */}
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2">
+              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#242526] rounded-xl shadow-lg border border-gray-200 dark:border-[#3E4042] py-2 z-50">
                 {/* Thông tin user */}
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-[#3E4042]">
                   <div className="flex items-center gap-3">
                     <img
-                      src={user?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                      src={
+                        user?.avatar ||
+                        'https://ui-avatars.com/api/?background=0866FF&color=fff&bold=true&name=User'
+                      }
                       alt={user?.fullName}
-                      className="w-10 h-10 rounded-full object-cover"
+                      className="w-10 h-10 rounded-full object-cover border-2 border-[#0866FF]"
                     />
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        {user?.fullName}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        @{user?.username}
-                      </p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{user?.fullName}</p>
+                      <p className="text-sm text-gray-500 dark:text-[#B0B3B8]">@{user?.username}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Các menu items */}
+                {/* Menu items */}
                 <Link
                   to={`/profile/${user?.username}`}
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-700 dark:text-white transition-colors"
                   onClick={() => setShowProfileMenu(false)}
                 >
                   <FiUser className="w-5 h-5" />
                   <span>Trang cá nhân</span>
                 </Link>
-                
+
                 <Link
                   to="/settings"
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-700 dark:text-white transition-colors"
                   onClick={() => setShowProfileMenu(false)}
                 >
                   <FiSettings className="w-5 h-5" />
                   <span>Cài đặt</span>
                 </Link>
 
-                {/* Hiển thị link admin nếu có quyền */}
+                {/* Admin link */}
                 {(user?.role === 'admin' || user?.role === 'super_admin') && (
                   <Link
                     to="/admin"
-                    className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-primary-500"
+                    className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-[#0866FF] transition-colors"
                     onClick={() => setShowProfileMenu(false)}
                   >
                     <FiSettings className="w-5 h-5" />
@@ -251,21 +306,29 @@ const Navbar = ({ onToggleSidebar }) => {
 
                 <Link
                   to="/help"
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] text-gray-700 dark:text-white transition-colors"
                   onClick={() => setShowProfileMenu(false)}
                 >
                   <FiHelpCircle className="w-5 h-5" />
                   <span>Trợ giúp</span>
                 </Link>
 
-                <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                {/* Đăng xuất */}
+                <div className="border-t border-gray-200 dark:border-[#3E4042] mt-2 pt-2">
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-2 w-full hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2 w-full hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 dark:text-red-400 transition-colors"
                   >
                     <FiLogOut className="w-5 h-5" />
                     <span>Đăng xuất</span>
                   </button>
+                </div>
+
+                {/* Footer */}
+                <div className="px-4 py-2 border-t border-gray-200 dark:border-[#3E4042] mt-2">
+                  <p className="text-xs text-gray-500 dark:text-[#B0B3B8] text-center">
+                    DRK v1.0.0
+                  </p>
                 </div>
               </div>
             )}

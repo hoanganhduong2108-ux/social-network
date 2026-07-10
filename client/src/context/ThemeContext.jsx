@@ -1,17 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// ============================================
+// FILE: src/context/ThemeContext.jsx
+// MÔ TẢ: Context Theme - SỬA LỖI HMR
+// ============================================
 
-const ThemeContext = createContext();
+import React, { createContext, useState, useEffect, useMemo, useCallback } from 'react';
 
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider');
-  }
-  return context;
-};
+// Tạo context
+export const ThemeContext = createContext(null);
 
-export const ThemeProvider = ({ children }) => {
+// Provider component
+export function ThemeProvider({ children }) {
   const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Kiểm tra localStorage và system preference
     const saved = localStorage.getItem('theme');
     if (saved) {
       return saved === 'dark';
@@ -19,28 +19,47 @@ export const ThemeProvider = ({ children }) => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
+  // ============================================
+  // Toggle theme
+  // ============================================
+  const toggleTheme = useCallback(() => {
+    setIsDarkMode(prev => !prev);
+  }, []);
+
+  // ============================================
+  // Effect: Cập nhật class và localStorage
+  // ============================================
   useEffect(() => {
+    const root = document.documentElement;
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
-  const value = {
+  // ============================================
+  // Memoize value
+  // ============================================
+  const value = useMemo(() => ({
     isDarkMode,
     toggleTheme,
-  };
+  }), [isDarkMode, toggleTheme]);
 
   return (
     <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
-};
+}
+
+// Hook sử dụng ThemeContext
+export function useTheme() {
+  const context = React.useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within ThemeProvider');
+  }
+  return context;
+}

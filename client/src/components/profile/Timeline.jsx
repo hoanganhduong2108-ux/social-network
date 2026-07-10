@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/profile/Timeline.jsx
+// FILE: src/components/profile/Timeline.jsx
 // MÔ TẢ: Dòng thời gian của người dùng
 // ============================================
 
@@ -16,7 +16,6 @@ const Timeline = ({ userId, isOwnProfile }) => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // Lấy bài viết
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -27,7 +26,7 @@ const Timeline = ({ userId, isOwnProfile }) => {
         if (page === 1) {
           setPosts(newPosts);
         } else {
-          setPosts(prev => [...prev, ...newPosts]);
+          setPosts((prev) => [...prev, ...newPosts]);
         }
         setHasMore(newPosts.length === 10);
       } catch (error) {
@@ -44,15 +43,13 @@ const Timeline = ({ userId, isOwnProfile }) => {
   };
 
   const handleUpdatePost = (updatedPost) => {
-    setPosts(prev =>
-      prev.map(post =>
-        post._id === updatedPost._id ? updatedPost : post
-      )
+    setPosts((prev) =>
+      prev.map((post) => (post._id === updatedPost._id ? updatedPost : post))
     );
   };
 
   const handleDeletePost = (postId) => {
-    setPosts(prev => prev.filter(post => post._id !== postId));
+    setPosts((prev) => prev.filter((post) => post._id !== postId));
   };
 
   if (loading && posts.length === 0) {
@@ -61,10 +58,8 @@ const Timeline = ({ userId, isOwnProfile }) => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {isOwnProfile && (
-        <CreatePost onPostCreated={handleNewPost} />
-      )}
-      
+      {isOwnProfile && <CreatePost onPostCreated={handleNewPost} />}
+
       <div className="space-y-4 mt-4">
         {posts.length === 0 ? (
           <div className="card text-center py-8">
@@ -90,8 +85,8 @@ const Timeline = ({ userId, isOwnProfile }) => {
             ))}
             {hasMore && (
               <button
-                onClick={() => setPage(p => p + 1)}
-                className="w-full py-3 text-primary-500 hover:text-primary-600 font-medium"
+                onClick={() => setPage((p) => p + 1)}
+                className="w-full py-3 text-blue-500 hover:text-blue-600 font-medium"
               >
                 Xem thêm
               </button>

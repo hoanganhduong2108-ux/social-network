@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/marketplace/ProductDetail.jsx
+// FILE: src/components/marketplace/ProductDetail.jsx
 // MÔ TẢ: Chi tiết sản phẩm
 // ============================================
 
@@ -9,9 +9,9 @@ import { Helmet } from 'react-helmet-async';
 import { api } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 import Loading from '../common/Loading';
-import { 
-  FiDollarSign, 
-  FiMapPin, 
+import {
+  FiDollarSign,
+  FiMapPin,
   FiMessageSquare,
   FiHeart,
   FiShare2,
@@ -29,7 +29,6 @@ const ProductDetail = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
 
-  // Lấy thông tin sản phẩm
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -47,7 +46,6 @@ const ProductDetail = () => {
     fetchProduct();
   }, [productId]);
 
-  // Xử lý like
   const handleLike = async () => {
     try {
       if (isLiked) {
@@ -63,7 +61,6 @@ const ProductDetail = () => {
     }
   };
 
-  // Xử lý nhắn tin với người bán
   const handleContact = () => {
     navigate(`/messages/${product.seller._id}`);
   };
@@ -83,11 +80,10 @@ const ProductDetail = () => {
   return (
     <>
       <Helmet>
-        <title>{product.title} - Social Network</title>
+        <title>{product.title} - VibeSpace</title>
       </Helmet>
 
       <div className="max-w-4xl mx-auto">
-        {/* Nút quay lại */}
         <button
           onClick={() => navigate('/marketplace')}
           className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4"
@@ -97,11 +93,12 @@ const ProductDetail = () => {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Ảnh sản phẩm */}
           <div className="card p-0 overflow-hidden">
             <div className="aspect-square bg-gray-100 dark:bg-gray-700">
               <img
-                src={product.images?.[currentImage] || 'https://via.placeholder.com/600x600'}
+                src={
+                  product.images?.[currentImage] || 'https://via.placeholder.com/600x600'
+                }
                 alt={product.title}
                 className="w-full h-full object-cover"
               />
@@ -113,7 +110,7 @@ const ProductDetail = () => {
                     key={index}
                     onClick={() => setCurrentImage(index)}
                     className={`w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 ${
-                      currentImage === index ? 'border-primary-500' : 'border-transparent'
+                      currentImage === index ? 'border-blue-500' : 'border-transparent'
                     }`}
                   >
                     <img
@@ -127,13 +124,12 @@ const ProductDetail = () => {
             )}
           </div>
 
-          {/* Thông tin sản phẩm */}
           <div className="space-y-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {product.title}
               </h1>
-              <p className="text-3xl font-bold text-primary-500 mt-2 flex items-center gap-1">
+              <p className="text-3xl font-bold text-blue-500 mt-2 flex items-center gap-1">
                 <FiDollarSign className="w-6 h-6" />
                 {product.price?.toLocaleString()}đ
               </p>
@@ -144,10 +140,12 @@ const ProductDetail = () => {
               <span>{product.location || 'Không xác định'}</span>
             </div>
 
-            {/* Người bán */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <img
-                src={product.seller?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                src={
+                  product.seller?.avatar ||
+                  'https://ui-avatars.com/api/?background=random&bold=true'
+                }
                 alt={product.seller?.fullName}
                 className="w-10 h-10 rounded-full object-cover"
               />
@@ -161,7 +159,6 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Mô tả */}
             <div>
               <h3 className="font-medium text-gray-900 dark:text-white mb-2">
                 Mô tả
@@ -171,7 +168,6 @@ const ProductDetail = () => {
               </p>
             </div>
 
-            {/* Nút hành động */}
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={handleContact}

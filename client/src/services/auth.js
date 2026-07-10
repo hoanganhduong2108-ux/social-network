@@ -1,11 +1,18 @@
+// ============================================
+// FILE: src/services/auth.js
+// MÔ TẢ: Auth API service
+// ============================================
+
 import { api } from './api';
 
 export const authAPI = {
   register: async (userData) => {
+    console.log('📝 Calling API: POST /auth/register');
     return await api.post('/auth/register', userData);
   },
 
   login: async (emailOrUsername, password) => {
+    console.log('🔐 Calling API: POST /auth/login');
     return await api.post('/auth/login', { emailOrUsername, password });
   },
 
@@ -29,3 +36,5 @@ export const authAPI = {
     return await api.post('/auth/reset-password', { token, newPassword });
   },
 };
+
+export default authAPI;

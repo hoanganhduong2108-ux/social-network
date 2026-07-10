@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/admin/AdminReports.jsx
+// FILE: src/components/admin/AdminReports.jsx
 // MÔ TẢ: Quản lý báo cáo cho admin
 // ============================================
 
@@ -7,10 +7,10 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import Loading from '../common/Loading';
 import { timeAgo } from '../../utils/helpers';
-import { 
-  FiSearch, 
-  FiCheck, 
-  FiX, 
+import {
+  FiSearch,
+  FiCheck,
+  FiX,
   FiTrash2,
   FiEye,
   FiAlertTriangle,
@@ -25,7 +25,6 @@ const AdminReports = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedReport, setSelectedReport] = useState(null);
 
-  // Lấy danh sách báo cáo
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true);
@@ -45,19 +44,18 @@ const AdminReports = () => {
     fetchReports();
   }, [page]);
 
-  // Xử lý báo cáo
   const handleReport = async (postId, action) => {
     try {
       await api.put(`/admin/reports/${postId}`, { action });
-      
+
       const messages = {
         ignore: 'Đã bỏ qua báo cáo',
         delete: 'Đã xóa bài viết',
         warn: 'Đã gửi cảnh báo cho tác giả',
       };
-      
+
       toast.success(messages[action]);
-      setReports(prev => prev.filter(p => p._id !== postId));
+      setReports((prev) => prev.filter((p) => p._id !== postId));
     } catch (error) {
       console.error('Error handling report:', error);
       toast.error('Không thể xử lý báo cáo');
@@ -79,10 +77,9 @@ const AdminReports = () => {
         </span>
       </div>
 
-      {/* Danh sách báo cáo */}
       {reports.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-          <FiCheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <FiCheck className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">
             Không có báo cáo nào cần xử lý
           </p>
@@ -95,11 +92,13 @@ const AdminReports = () => {
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex flex-col md:flex-row md:items-start gap-4">
-                {/* Thông tin bài viết */}
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <img
-                      src={post.author?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                      src={
+                        post.author?.avatar ||
+                        'https://ui-avatars.com/api/?background=random&bold=true'
+                      }
                       alt={post.author?.fullName}
                       className="w-8 h-8 rounded-full object-cover"
                     />
@@ -121,10 +120,12 @@ const AdminReports = () => {
                     {post.content || 'Bài viết không có nội dung'}
                   </p>
 
-                  {/* Danh sách báo cáo chi tiết */}
                   <div className="mt-2 space-y-1">
                     {post.reports?.slice(0, 3).map((report, index) => (
-                      <div key={index} className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                      <div
+                        key={index}
+                        className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2"
+                      >
                         <span>👤 {report.user?.fullName}</span>
                         <span>·</span>
                         <span className="text-red-500">{report.reason}</span>
@@ -141,7 +142,6 @@ const AdminReports = () => {
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex flex-wrap gap-2 md:flex-col">
                   <button
                     onClick={() => setSelectedReport(post)}
@@ -178,7 +178,6 @@ const AdminReports = () => {
         </div>
       )}
 
-      {/* Phân trang */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 px-4 py-3">
           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -186,14 +185,14 @@ const AdminReports = () => {
           </p>
           <div className="flex gap-2">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
               className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50"
             >
               Trước
             </button>
             <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
               className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50"
             >
@@ -203,7 +202,6 @@ const AdminReports = () => {
         </div>
       )}
 
-      {/* Modal xem chi tiết */}
       {selectedReport && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -221,7 +219,10 @@ const AdminReports = () => {
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-3">
                 <img
-                  src={selectedReport.author?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                  src={
+                    selectedReport.author?.avatar ||
+                    'https://ui-avatars.com/api/?background=random&bold=true'
+                  }
                   alt={selectedReport.author?.fullName}
                   className="w-10 h-10 rounded-full object-cover"
                 />
@@ -247,11 +248,17 @@ const AdminReports = () => {
                 </h4>
                 <div className="space-y-2">
                   {selectedReport.reports?.map((report, index) => (
-                    <div key={index} className="bg-red-50 dark:bg-red-900/10 p-3 rounded-lg">
+                    <div
+                      key={index}
+                      className="bg-red-50 dark:bg-red-900/10 p-3 rounded-lg"
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <img
-                            src={report.user?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                            src={
+                              report.user?.avatar ||
+                              'https://ui-avatars.com/api/?background=random&bold=true'
+                            }
                             alt={report.user?.fullName}
                             className="w-6 h-6 rounded-full object-cover"
                           />

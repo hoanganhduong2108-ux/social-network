@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/messages/ChatWindow.jsx
+// FILE: src/components/messages/ChatWindow.jsx
 // MÔ TẢ: Cửa sổ chat
 // ============================================
 
@@ -7,10 +7,10 @@ import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { timeAgo } from '../../utils/helpers';
-import { 
-  FiSend, 
-  FiImage, 
-  FiSmile, 
+import {
+  FiSend,
+  FiImage,
+  FiSmile,
   FiPaperclip,
   FiMoreVertical,
   FiPhone,
@@ -33,7 +33,6 @@ const ChatWindow = ({
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
-  // Xử lý gửi tin nhắn
   const handleSend = async () => {
     if (!message.trim()) return;
 
@@ -45,7 +44,6 @@ const ChatWindow = ({
     }
   };
 
-  // Xử lý phím Enter
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -53,7 +51,6 @@ const ChatWindow = ({
     }
   };
 
-  // Xử lý typing
   const handleTyping = () => {
     setIsTyping(true);
     clearTimeout(typingTimeoutRef.current);
@@ -62,11 +59,9 @@ const ChatWindow = ({
     }, 3000);
   };
 
-  // Xử lý chọn file
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // TODO: Upload file and send message
       toast.info('Tính năng đang phát triển');
     }
     e.target.value = '';
@@ -84,7 +79,10 @@ const ChatWindow = ({
         >
           <div className="relative">
             <img
-              src={conversation.user.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+              src={
+                conversation.user.avatar ||
+                'https://ui-avatars.com/api/?background=random&bold=true'
+              }
               alt={conversation.user.fullName}
               className="w-10 h-10 rounded-full object-cover"
             />
@@ -117,28 +115,41 @@ const ChatWindow = ({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg, index) => {
-          const isOwn = msg.sender._id === user._id;
-          const showAvatar = !isOwn && (
-            index === 0 || messages[index - 1]?.sender._id !== msg.sender._id
-          );
+          // Null check: đảm bảo msg.sender tồn tại trước khi so sánh
+          if (!msg || !msg.sender) return null;
+          
+          const senderId = msg.sender._id || msg.sender;
+          const isOwn = senderId?.toString() === user._id?.toString();
+          const prevMsg = messages[index - 1];
+          const prevSenderId = prevMsg?.sender?._id || prevMsg?.sender;
+          const showAvatar =
+            !isOwn &&
+            (index === 0 || prevSenderId?.toString() !== senderId?.toString());
 
           return (
             <div
               key={msg._id || index}
               className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`flex items-end gap-2 max-w-[70%] ${isOwn ? 'flex-row-reverse' : ''}`}>
+              <div
+                className={`flex items-end gap-2 max-w-[70%] ${
+                  isOwn ? 'flex-row-reverse' : ''
+                }`}
+              >
                 {showAvatar && (
                   <img
-                    src={msg.sender.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
-                    alt={msg.sender.fullName}
+                    src={
+                      msg.sender.avatar ||
+                      `https://ui-avatars.com/api/?background=random&bold=true&name=${msg.sender.fullName || 'U'}`
+                    }
+                    alt={msg.sender.fullName || ''}
                     className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                   />
                 )}
                 <div
                   className={`px-4 py-2 rounded-2xl ${
                     isOwn
-                      ? 'bg-primary-500 text-white'
+                      ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   }`}
                 >
@@ -150,7 +161,11 @@ const ChatWindow = ({
                   <p className="text-sm whitespace-pre-wrap break-words">
                     {msg.content}
                   </p>
-                  <p className={`text-xs mt-1 ${isOwn ? 'text-primary-100' : 'text-gray-400'}`}>
+                  <p
+                    className={`text-xs mt-1 ${
+                      isOwn ? 'text-blue-100' : 'text-gray-400'
+                    }`}
+                  >
                     {timeAgo(msg.createdAt)}
                   </p>
                 </div>
@@ -161,7 +176,10 @@ const ChatWindow = ({
         {typing && (
           <div className="flex items-start gap-2">
             <img
-              src={conversation.user.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+              src={
+                conversation.user.avatar ||
+                'https://ui-avatars.com/api/?background=random&bold=true'
+              }
               alt={conversation.user.fullName}
               className="w-8 h-8 rounded-full object-cover"
             />
@@ -180,7 +198,6 @@ const ChatWindow = ({
       {/* Input */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2">
-          {/* Nút đính kèm */}
           <button
             onClick={() => fileInputRef.current?.click()}
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500"
@@ -195,12 +212,10 @@ const ChatWindow = ({
             onChange={handleFileSelect}
           />
 
-          {/* Nút emoji */}
           <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500">
             <FiSmile className="w-5 h-5" />
           </button>
 
-          {/* Text input */}
           <input
             type="text"
             value={message}
@@ -210,14 +225,13 @@ const ChatWindow = ({
             }}
             onKeyPress={handleKeyPress}
             placeholder="Nhập tin nhắn..."
-            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
-          {/* Nút gửi */}
           <button
             onClick={handleSend}
             disabled={!message.trim()}
-            className="p-2 rounded-full bg-primary-500 hover:bg-primary-600 transition-colors disabled:opacity-50 text-white"
+            className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors disabled:opacity-50 text-white"
           >
             <FiSend className="w-5 h-5" />
           </button>

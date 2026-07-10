@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/pages/CreatePage.jsx
+// FILE: src/components/pages/CreatePage.jsx
 // MÔ TẢ: Modal tạo trang mới
 // ============================================
 
@@ -28,7 +28,7 @@ const CreatePage = ({ onClose, onCreated }) => {
     const { name, value } = e.target;
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
@@ -36,7 +36,7 @@ const CreatePage = ({ onClose, onCreated }) => {
         },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
       }));
@@ -54,7 +54,6 @@ const CreatePage = ({ onClose, onCreated }) => {
     setLoading(true);
 
     try {
-      // Upload avatar
       let avatarUrl = '';
       if (avatar) {
         const formDataFile = new FormData();
@@ -63,7 +62,6 @@ const CreatePage = ({ onClose, onCreated }) => {
         avatarUrl = response.data.url;
       }
 
-      // Upload cover photo
       let coverUrl = '';
       if (coverPhoto) {
         const formDataFile = new FormData();
@@ -72,7 +70,6 @@ const CreatePage = ({ onClose, onCreated }) => {
         coverUrl = response.data.url;
       }
 
-      // Tạo trang
       const pageData = {
         ...formData,
         avatar: avatarUrl || undefined,
@@ -80,7 +77,7 @@ const CreatePage = ({ onClose, onCreated }) => {
       };
 
       const response = await api.post('/pages', pageData);
-      
+
       toast.success('Đã tạo trang thành công!');
       if (onCreated) onCreated(response.data.page);
     } catch (error) {
@@ -94,7 +91,6 @@ const CreatePage = ({ onClose, onCreated }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
             Tạo trang mới
@@ -107,9 +103,7 @@ const CreatePage = ({ onClose, onCreated }) => {
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-4">
-          {/* Avatar */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Ảnh đại diện
@@ -140,7 +134,6 @@ const CreatePage = ({ onClose, onCreated }) => {
             </div>
           </div>
 
-          {/* Tên trang */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tên trang <span className="text-red-500">*</span>
@@ -156,7 +149,6 @@ const CreatePage = ({ onClose, onCreated }) => {
             />
           </div>
 
-          {/* Username */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tên định danh
@@ -170,11 +162,10 @@ const CreatePage = ({ onClose, onCreated }) => {
               placeholder="username"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              URL: socialnetwork.com/pages/{formData.username || 'ten-trang'}
+              URL: vibespace.com/pages/{formData.username || 'ten-trang'}
             </p>
           </div>
 
-          {/* Danh mục */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Danh mục
@@ -205,7 +196,6 @@ const CreatePage = ({ onClose, onCreated }) => {
             </select>
           </div>
 
-          {/* Mô tả */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Mô tả
@@ -220,7 +210,6 @@ const CreatePage = ({ onClose, onCreated }) => {
             />
           </div>
 
-          {/* Liên hệ */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Thông tin liên hệ
@@ -253,7 +242,6 @@ const CreatePage = ({ onClose, onCreated }) => {
             </div>
           </div>
 
-          {/* Nút submit */}
           <div className="flex gap-3">
             <button
               type="button"

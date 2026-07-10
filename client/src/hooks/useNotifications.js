@@ -1,3 +1,8 @@
+// ============================================
+// FILE: src/hooks/useNotifications.js
+// MÔ TẢ: Hook quản lý thông báo - SỬA LỖI
+// ============================================
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { useSocket } from './useSocket';
@@ -10,11 +15,15 @@ export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // ============================================
+  // Lấy danh sách thông báo
+  // ============================================
   const fetchNotifications = useCallback(async () => {
     try {
       const response = await api.get('/notifications');
-      setNotifications(response.data.notifications);
-      setUnreadCount(response.data.unreadCount || 0);
+      setNotifications(response.notifications || []);
+      const unread = response.notifications?.filter((n) => !n.isRead).length || 0;
+      setUnreadCount(unread);
     } catch (error) {
       console.error('Fetch notifications error:', error);
     } finally {
@@ -22,55 +31,67 @@ export const useNotifications = () => {
     }
   }, []);
 
+  // ============================================
+  // Lấy số thông báo chưa đọc
+  // ============================================
   const fetchUnreadCount = useCallback(async () => {
     try {
       const response = await api.get('/notifications/unread');
-      setUnreadCount(response.data.count || 0);
+      setUnreadCount(response.count || 0);
     } catch (error) {
       console.error('Fetch unread count error:', error);
     }
   }, []);
 
+  // ============================================
+  // Đánh dấu đã đọc
+  // ============================================
   const markAsRead = useCallback(async (notificationId) => {
     try {
       await api.put(`/notifications/${notificationId}/read`);
-      setNotifications(prev =>
-        prev.map(n =>
+      setNotifications((prev) =>
+        prev.map((n) =>
           n._id === notificationId ? { ...n, isRead: true } : n
         )
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Mark as read error:', error);
     }
   }, []);
 
+  // ============================================
+  // Đánh dấu tất cả đã đọc
+  // ============================================
   const markAllAsRead = useCallback(async () => {
     try {
       await api.put('/notifications/read-all');
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, isRead: true }))
-      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {
       console.error('Mark all as read error:', error);
     }
   }, []);
 
+  // ============================================
+  // Xóa thông báo
+  // ============================================
   const deleteNotification = useCallback(async (notificationId) => {
     try {
       await api.delete(`/notifications/${notificationId}`);
-      setNotifications(prev =>
-        prev.filter(n => n._id !== notificationId)
-      );
-      if (!notifications.find(n => n._id === notificationId)?.isRead) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
+      const deleted = notifications.find((n) => n._id === notificationId);
+      setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
+      if (deleted && !deleted.isRead) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
     } catch (error) {
       console.error('Delete notification error:', error);
     }
   }, [notifications]);
 
+  // ============================================
+  // Lắng nghe thông báo realtime
+  // ============================================
   useEffect(() => {
     if (user) {
       fetchNotifications();
@@ -81,24 +102,27 @@ export const useNotifications = () => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('new_notification', (notification) => {
-      setNotifications(prev => [notification, ...prev]);
+    const handleNewNotification = (notification) => {
+      setNotifications((prev) => [notification, ...prev]);
       if (!notification.isRead) {
-        setUnreadCount(prev => prev + 1);
+        setUnreadCount((prev) => prev + 1);
       }
-    });
+    };
 
-    socket.on('notification_read_ack', ({ notificationId }) => {
-      setNotifications(prev =>
-        prev.map(n =>
+    const handleNotificationReadAck = ({ notificationId }) => {
+      setNotifications((prev) =>
+        prev.map((n) =>
           n._id === notificationId ? { ...n, isRead: true } : n
         )
       );
-    });
+    };
+
+    socket.on('new_notification', handleNewNotification);
+    socket.on('notification_read_ack', handleNotificationReadAck);
 
     return () => {
-      socket.off('new_notification');
-      socket.off('notification_read_ack');
+      socket.off('new_notification', handleNewNotification);
+      socket.off('notification_read_ack', handleNotificationReadAck);
     };
   }, [socket]);
 

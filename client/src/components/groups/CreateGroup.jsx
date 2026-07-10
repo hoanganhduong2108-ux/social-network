@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/groups/CreateGroup.jsx
+// FILE: src/components/groups/CreateGroup.jsx
 // MÔ TẢ: Modal tạo nhóm mới
 // ============================================
 
@@ -37,7 +37,6 @@ const CreateGroup = ({ onClose, onCreated }) => {
     setLoading(true);
 
     try {
-      // Upload avatar
       let avatarUrl = '';
       if (avatar) {
         const formDataFile = new FormData();
@@ -46,7 +45,6 @@ const CreateGroup = ({ onClose, onCreated }) => {
         avatarUrl = response.data.url;
       }
 
-      // Upload cover photo
       let coverUrl = '';
       if (coverPhoto) {
         const formDataFile = new FormData();
@@ -55,7 +53,6 @@ const CreateGroup = ({ onClose, onCreated }) => {
         coverUrl = response.data.url;
       }
 
-      // Tạo nhóm
       const groupData = {
         ...formData,
         avatar: avatarUrl || undefined,
@@ -63,7 +60,7 @@ const CreateGroup = ({ onClose, onCreated }) => {
       };
 
       const response = await api.post('/groups', groupData);
-      
+
       toast.success('Đã tạo nhóm thành công!');
       if (onCreated) onCreated(response.data.group);
     } catch (error) {
@@ -77,7 +74,6 @@ const CreateGroup = ({ onClose, onCreated }) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
             Tạo nhóm mới
@@ -90,9 +86,7 @@ const CreateGroup = ({ onClose, onCreated }) => {
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-4">
-          {/* Avatar */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Ảnh đại diện
@@ -123,7 +117,6 @@ const CreateGroup = ({ onClose, onCreated }) => {
             </div>
           </div>
 
-          {/* Tên nhóm */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tên nhóm <span className="text-red-500">*</span>
@@ -139,7 +132,6 @@ const CreateGroup = ({ onClose, onCreated }) => {
             />
           </div>
 
-          {/* Mô tả */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Mô tả
@@ -154,7 +146,6 @@ const CreateGroup = ({ onClose, onCreated }) => {
             />
           </div>
 
-          {/* Quyền riêng tư */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Quyền riêng tư
@@ -171,7 +162,6 @@ const CreateGroup = ({ onClose, onCreated }) => {
             </select>
           </div>
 
-          {/* Danh mục */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Danh mục
@@ -197,7 +187,6 @@ const CreateGroup = ({ onClose, onCreated }) => {
             </select>
           </div>
 
-          {/* Nút submit */}
           <div className="flex gap-3">
             <button
               type="button"

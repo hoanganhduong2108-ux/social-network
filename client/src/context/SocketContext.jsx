@@ -1,70 +1,138 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+// ============================================
+// FILE: src/context/SocketContext.jsx
+// MÔ TẢ: Context Socket.io - SỬA LỖI HMR
+// ============================================
+
+import React, { createContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
-const SocketContext = createContext();
+// Tạo context
+export const SocketContext = createContext(null);
 
-export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error('useSocket must be used within SocketProvider');
-  }
-  return context;
-};
-
-export const SocketProvider = ({ children }) => {
+// Provider component
+export function SocketProvider({ children }) {
+  const { user, isAuthenticated, loading } = useAuth();
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const [connectionError, setConnectionError] = useState(null);
+  const socketRef = useRef(null);
 
-  useEffect(() => {
+  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+
+  // ============================================
+  // Kết nối Socket
+  // ============================================
+  const connectSocket = useCallback(() => {
     if (!isAuthenticated || !user) {
-      if (socket) {
-        socket.disconnect();
-        setSocket(null);
-        setIsConnected(false);
-      }
-      return;
+      console.log('⏳ Waiting for authentication...');
+      return null;
+    }
+
+    if (socketRef.current?.connected) {
+      console.log('✅ Socket already connected');
+      return socketRef.current;
     }
 
     const token = localStorage.getItem('token');
-    const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+    if (!token) {
+      console.log('❌ No token found');
+      return null;
+    }
+
+    console.log('🔌 Connecting to socket...');
+    
+    const newSocket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket connected');
+      console.log('✅ Socket connected:', newSocket.id);
       setIsConnected(true);
+      setConnectionError(null);
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    newSocket.on('disconnect', (reason) => {
+      console.log('🔌 Socket disconnected:', reason);
       setIsConnected(false);
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      console.error('❌ Socket connection error:', error);
+      setConnectionError(error.message);
       setIsConnected(false);
     });
 
+    socketRef.current = newSocket;
     setSocket(newSocket);
+    return newSocket;
+  }, [isAuthenticated, user, SOCKET_URL]);
 
-    return () => {
-      newSocket.disconnect();
+  // ============================================
+  // Ngắt kết nối Socket
+  // ============================================
+  const disconnectSocket = useCallback(() => {
+    if (socketRef.current) {
+      console.log('🔌 Disconnecting socket...');
+      socketRef.current.disconnect();
+      socketRef.current = null;
       setSocket(null);
       setIsConnected(false);
-    };
-  }, [user, isAuthenticated]);
+    }
+  }, []);
 
-  const value = {
+  // ============================================
+  // Effect: Tự động kết nối khi auth
+  // ============================================
+  useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      const timeout = setTimeout(() => {
+        connectSocket();
+      }, 500);
+      return () => clearTimeout(timeout);
+    } else if (!isAuthenticated && socketRef.current) {
+      disconnectSocket();
+    }
+  }, [loading, isAuthenticated, user, connectSocket, disconnectSocket]);
+
+  // ============================================
+  // Cleanup khi unmount
+  // ============================================
+  useEffect(() => {
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  // ============================================
+  // Memoize value
+  // ============================================
+  const value = useMemo(() => ({
     socket,
     isConnected,
-  };
+    connectionError,
+    connectSocket,
+    disconnectSocket,
+  }), [socket, isConnected, connectionError, connectSocket, disconnectSocket]);
 
   return (
     <SocketContext.Provider value={value}>
       {children}
     </SocketContext.Provider>
   );
-};
+}
+
+// Hook sử dụng SocketContext
+export function useSocket() {
+  const context = React.useContext(SocketContext);
+  if (!context) {
+    throw new Error('useSocket must be used within SocketProvider');
+  }
+  return context;
+}

@@ -1,28 +1,21 @@
 // ============================================
-// FILE: client/src/components/admin/AdminUsers.jsx
+// FILE: src/components/admin/AdminUsers.jsx
 // MÔ TẢ: Quản lý người dùng cho admin
 // ============================================
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import Loading from '../common/Loading';
-import { FiSearch, FiEdit2, FiTrash2, FiUserCheck, FiUserX } from 'react-icons/fi';
+import { FiSearch, FiTrash2, FiUserCheck, FiUserX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 const AdminUsers = () => {
-  // ============================================
-  // Khởi tạo hooks và state
-  // ============================================
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [selectedUser, setSelectedUser] = useState(null);
 
-  // ============================================
-  // Lấy danh sách người dùng
-  // ============================================
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -39,16 +32,10 @@ const AdminUsers = () => {
     }
   };
 
-  // ============================================
-  // Effect: Fetch khi page hoặc search thay đổi
-  // ============================================
   useEffect(() => {
     fetchUsers();
   }, [page, searchTerm]);
 
-  // ============================================
-  // Xử lý khóa/mở khóa người dùng
-  // ============================================
   const handleToggleBan = async (userId, isBanned) => {
     if (!confirm(`Bạn có chắc muốn ${isBanned ? 'mở khóa' : 'khóa'} người dùng này?`)) {
       return;
@@ -67,9 +54,6 @@ const AdminUsers = () => {
     }
   };
 
-  // ============================================
-  // Xóa người dùng
-  // ============================================
   const handleDeleteUser = async (userId) => {
     if (!confirm('Bạn có chắc muốn xóa người dùng này? Hành động này không thể hoàn tác.')) {
       return;
@@ -85,9 +69,6 @@ const AdminUsers = () => {
     }
   };
 
-  // ============================================
-  // Render
-  // ============================================
   if (loading) {
     return <Loading text="Đang tải danh sách người dùng..." />;
   }
@@ -98,8 +79,6 @@ const AdminUsers = () => {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Quản lý người dùng
         </h1>
-        
-        {/* Thanh tìm kiếm */}
         <div className="relative w-full sm:w-64">
           <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
@@ -107,12 +86,11 @@ const AdminUsers = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Tìm kiếm người dùng..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
 
-      {/* Bảng người dùng */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -141,7 +119,10 @@ const AdminUsers = () => {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <img
-                        src={user.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                        src={
+                          user.avatar ||
+                          'https://ui-avatars.com/api/?background=random&bold=true'
+                        }
                         alt={user.fullName}
                         className="w-10 h-10 rounded-full object-cover"
                       />
@@ -202,7 +183,6 @@ const AdminUsers = () => {
           </table>
         </div>
 
-        {/* Phân trang */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -210,14 +190,14 @@ const AdminUsers = () => {
             </p>
             <div className="flex gap-2">
               <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50"
               >
                 Trước
               </button>
               <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50"
               >

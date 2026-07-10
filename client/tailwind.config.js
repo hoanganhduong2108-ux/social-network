@@ -4,36 +4,18 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#e7f3ff',
-          100: '#cce4ff',
-          200: '#99c9ff',
-          300: '#66adff',
-          400: '#3392ff',
-          500: '#1877f2', // Facebook blue
-          600: '#0d65d9',
-          700: '#0a4d99',
-          800: '#073366',
-          900: '#031a33',
-        },
-        secondary: {
-          50: '#f5f7fa',
-          100: '#e4e7eb',
-          200: '#cdd0d6',
-          300: '#b2b6c0',
-          400: '#979aa5',
-          500: '#7c808a',
-          600: '#63666e',
-          700: '#4a4c53',
-          800: '#323338',
-          900: '#191a1c',
-        },
+        'fb-blue': '#0866FF',
+        'fb-bg': '#F0F2F5',
+        'fb-dark-bg': '#18191A',
+        'fb-dark-card': '#242526',
+        'fb-text-gray': '#65676B',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',

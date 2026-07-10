@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/profile/ProfileSettings.jsx
+// FILE: src/components/profile/ProfileSettings.jsx
 // MÔ TẢ: Cài đặt trang cá nhân
 // ============================================
 
@@ -16,7 +16,9 @@ const ProfileSettings = () => {
     bio: user?.bio || '',
     phone: user?.phone || '',
     gender: user?.gender || 'prefer-not-to-say',
-    birthday: user?.birthday ? new Date(user.birthday).toISOString().split('T')[0] : '',
+    birthday: user?.birthday
+      ? new Date(user.birthday).toISOString().split('T')[0]
+      : '',
     location: {
       city: user?.location?.city || '',
       country: user?.location?.country || '',
@@ -45,7 +47,7 @@ const ProfileSettings = () => {
     const { name, value } = e.target;
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
@@ -53,7 +55,7 @@ const ProfileSettings = () => {
         },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
       }));
@@ -83,7 +85,6 @@ const ProfileSettings = () => {
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Thông tin cơ bản */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -156,7 +157,6 @@ const ProfileSettings = () => {
           </div>
         </div>
 
-        {/* Địa chỉ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -184,7 +184,6 @@ const ProfileSettings = () => {
           </div>
         </div>
 
-        {/* Mạng xã hội */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Liên kết mạng xã hội
@@ -225,7 +224,6 @@ const ProfileSettings = () => {
           </div>
         </div>
 
-        {/* Quyền riêng tư */}
         <div>
           <h4 className="font-medium text-gray-900 dark:text-white mb-2">
             Quyền riêng tư
@@ -267,11 +265,13 @@ const ProfileSettings = () => {
                 type="checkbox"
                 name="privacy.allowTagging"
                 checked={formData.privacy.allowTagging}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  privacy: { ...prev.privacy, allowTagging: e.target.checked }
-                }))}
-                className="w-4 h-4 text-primary-500"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    privacy: { ...prev.privacy, allowTagging: e.target.checked },
+                  }))
+                }
+                className="w-4 h-4 text-blue-500"
               />
               <label className="text-sm text-gray-600 dark:text-gray-300">
                 Cho phép gắn thẻ bạn trong bài viết
@@ -282,11 +282,13 @@ const ProfileSettings = () => {
                 type="checkbox"
                 name="privacy.showOnlineStatus"
                 checked={formData.privacy.showOnlineStatus}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  privacy: { ...prev.privacy, showOnlineStatus: e.target.checked }
-                }))}
-                className="w-4 h-4 text-primary-500"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    privacy: { ...prev.privacy, showOnlineStatus: e.target.checked },
+                  }))
+                }
+                className="w-4 h-4 text-blue-500"
               />
               <label className="text-sm text-gray-600 dark:text-gray-300">
                 Hiển thị trạng thái hoạt động
@@ -296,11 +298,7 @@ const ProfileSettings = () => {
         </div>
 
         <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary"
-          >
+          <button type="submit" disabled={loading} className="btn-primary">
             {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
           </button>
         </div>

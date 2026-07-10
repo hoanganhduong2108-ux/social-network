@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/pages/PageDetail.jsx
+// FILE: src/components/pages/PageDetail.jsx
 // MÔ TẢ: Chi tiết trang (Fanpage)
 // ============================================
 
@@ -15,7 +15,6 @@ import {
   FiUserPlus,
   FiUserMinus,
   FiSettings,
-  FiEdit2,
   FiInfo,
   FiMail,
   FiPhone,
@@ -33,7 +32,6 @@ const PageDetail = ({ pageId }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
 
-  // Lấy thông tin trang
   useEffect(() => {
     const fetchPage = async () => {
       try {
@@ -52,7 +50,6 @@ const PageDetail = ({ pageId }) => {
     fetchPage();
   }, [pageId]);
 
-  // Xử lý theo dõi trang
   const handleFollow = async () => {
     try {
       if (isFollowing) {
@@ -86,7 +83,6 @@ const PageDetail = ({ pageId }) => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Cover và avatar */}
       <div className="card p-0 overflow-hidden">
         <div className="relative h-48 bg-gray-200 dark:bg-gray-700">
           {page.coverPhoto && (
@@ -99,7 +95,10 @@ const PageDetail = ({ pageId }) => {
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
             <div className="flex items-end gap-4">
               <img
-                src={page.avatar || 'https://ui-avatars.com/api/?background=random&bold=true&size=128'}
+                src={
+                  page.avatar ||
+                  'https://ui-avatars.com/api/?background=random&bold=true&size=128'
+                }
                 alt={page.name}
                 className="w-20 h-20 rounded-full border-4 border-white dark:border-gray-800"
               />
@@ -112,7 +111,11 @@ const PageDetail = ({ pageId }) => {
               <div className="flex gap-2">
                 <button
                   onClick={handleFollow}
-                  className={isFollowing ? 'btn-secondary bg-white/20 hover:bg-white/30 text-white' : 'btn-primary'}
+                  className={
+                    isFollowing
+                      ? 'btn-secondary bg-white/20 hover:bg-white/30 text-white'
+                      : 'btn-primary'
+                  }
                 >
                   {isFollowing ? (
                     <>
@@ -137,9 +140,8 @@ const PageDetail = ({ pageId }) => {
         </div>
       </div>
 
-      {/* Tab navigation */}
       <div className="flex gap-2 mt-4 border-b border-gray-200 dark:border-gray-700">
-        <button className="px-4 py-2 border-b-2 border-primary-500 text-primary-500 font-medium">
+        <button className="px-4 py-2 border-b-2 border-blue-500 text-blue-500 font-medium">
           Bài viết
         </button>
         <button
@@ -153,9 +155,7 @@ const PageDetail = ({ pageId }) => {
         </button>
       </div>
 
-      {/* Nội dung */}
       <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Bài viết */}
         <div className="lg:col-span-2">
           {isFollowing && (
             <CreatePost
@@ -176,12 +176,10 @@ const PageDetail = ({ pageId }) => {
           </div>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-4">
-          {/* Thông tin trang */}
           <div className="card">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <FiInfo className="text-primary-500" />
+              <FiInfo className="text-blue-500" />
               Giới thiệu
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -203,7 +201,12 @@ const PageDetail = ({ pageId }) => {
               {page.contact?.website && (
                 <p className="flex items-center gap-2">
                   <FiGlobe className="w-4 h-4" />
-                  <a href={page.contact.website} target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline">
+                  <a
+                    href={page.contact.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
                     {page.contact.website}
                   </a>
                 </p>
@@ -211,7 +214,6 @@ const PageDetail = ({ pageId }) => {
             </div>
           </div>
 
-          {/* Đánh giá */}
           {showReviews && (
             <div className="card">
               <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
@@ -221,10 +223,16 @@ const PageDetail = ({ pageId }) => {
               {page.reviews?.length > 0 ? (
                 <div className="space-y-3">
                   {page.reviews.slice(0, 5).map((review, index) => (
-                    <div key={index} className="border-b border-gray-100 dark:border-gray-700 pb-3 last:border-0">
+                    <div
+                      key={index}
+                      className="border-b border-gray-100 dark:border-gray-700 pb-3 last:border-0"
+                    >
                       <div className="flex items-center gap-2">
                         <img
-                          src={review.user?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                          src={
+                            review.user?.avatar ||
+                            'https://ui-avatars.com/api/?background=random&bold=true'
+                          }
                           alt={review.user?.fullName}
                           className="w-6 h-6 rounded-full object-cover"
                         />

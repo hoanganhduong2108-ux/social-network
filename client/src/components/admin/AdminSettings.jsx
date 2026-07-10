@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/admin/AdminSettings.jsx
+// FILE: src/components/admin/AdminSettings.jsx
 // MÔ TẢ: Cài đặt hệ thống cho admin
 // ============================================
 
@@ -22,7 +22,6 @@ const AdminSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Lấy cài đặt
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -38,25 +37,22 @@ const AdminSettings = () => {
     fetchSettings();
   }, []);
 
-  // Xử lý thay đổi
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
-  // Xử lý file types
   const handleFileTypeChange = (e) => {
     const value = e.target.value;
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      allowedFileTypes: value.split(',').map(s => s.trim()).filter(Boolean),
+      allowedFileTypes: value.split(',').map((s) => s.trim()).filter(Boolean),
     }));
   };
 
-  // Lưu cài đặt
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -83,7 +79,6 @@ const AdminSettings = () => {
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Thông tin cơ bản */}
         <div className="card">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
             Thông tin cơ bản
@@ -116,7 +111,6 @@ const AdminSettings = () => {
           </div>
         </div>
 
-        {/* Cài đặt chung */}
         <div className="card">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
             Cài đặt chung
@@ -128,7 +122,7 @@ const AdminSettings = () => {
                 name="maintenance"
                 checked={settings.maintenance}
                 onChange={handleChange}
-                className="w-4 h-4 text-primary-500"
+                className="w-4 h-4 text-blue-500"
               />
               <label className="text-sm text-gray-700 dark:text-gray-300">
                 Bảo trì hệ thống (chỉ admin mới truy cập được)
@@ -140,7 +134,7 @@ const AdminSettings = () => {
                 name="registrationEnabled"
                 checked={settings.registrationEnabled}
                 onChange={handleChange}
-                className="w-4 h-4 text-primary-500"
+                className="w-4 h-4 text-blue-500"
               />
               <label className="text-sm text-gray-700 dark:text-gray-300">
                 Cho phép đăng ký tài khoản mới
@@ -149,7 +143,6 @@ const AdminSettings = () => {
           </div>
         </div>
 
-        {/* Giới hạn nội dung */}
         <div className="card">
           <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
             Giới hạn nội dung
@@ -215,13 +208,8 @@ const AdminSettings = () => {
           </div>
         </div>
 
-        {/* Nút lưu */}
         <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={saving}
-            className="btn-primary"
-          >
+          <button type="submit" disabled={saving} className="btn-primary">
             {saving ? 'Đang lưu...' : 'Lưu cài đặt'}
           </button>
         </div>

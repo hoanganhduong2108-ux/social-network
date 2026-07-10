@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/admin/AdminPosts.jsx
+// FILE: src/components/admin/AdminPosts.jsx
 // MÔ TẢ: Quản lý bài viết cho admin
 // ============================================
 
@@ -7,15 +7,14 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import Loading from '../common/Loading';
 import { timeAgo } from '../../utils/helpers';
-import { 
-  FiSearch, 
-  FiCheck, 
-  FiX, 
+import {
+  FiSearch,
+  FiCheck,
+  FiX,
   FiTrash2,
   FiEye,
   FiFilter,
   FiAlertTriangle,
-  FiCheckCircle,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -28,7 +27,6 @@ const AdminPosts = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
 
-  // Lấy danh sách bài viết
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
@@ -50,19 +48,17 @@ const AdminPosts = () => {
     return () => clearTimeout(debounceTimer);
   }, [page, filter, searchTerm]);
 
-  // Xử lý duyệt bài viết
   const handleApprove = async (postId, isApproved) => {
     try {
       await api.put(`/admin/posts/${postId}/approve`, { isApproved });
       toast.success(isApproved ? 'Đã duyệt bài viết' : 'Đã từ chối bài viết');
-      setPosts(prev => prev.filter(p => p._id !== postId));
+      setPosts((prev) => prev.filter((p) => p._id !== postId));
     } catch (error) {
       console.error('Error approving post:', error);
       toast.error('Không thể thực hiện thao tác');
     }
   };
 
-  // Xử lý xóa bài viết
   const handleDelete = async (postId) => {
     if (!confirm('Bạn có chắc muốn xóa bài viết này? Hành động này không thể hoàn tác.')) {
       return;
@@ -71,7 +67,7 @@ const AdminPosts = () => {
     try {
       await api.delete(`/admin/posts/${postId}`);
       toast.success('Đã xóa bài viết');
-      setPosts(prev => prev.filter(p => p._id !== postId));
+      setPosts((prev) => prev.filter((p) => p._id !== postId));
     } catch (error) {
       console.error('Error deleting post:', error);
       toast.error('Không thể xóa bài viết');
@@ -92,7 +88,7 @@ const AdminPosts = () => {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">Tất cả</option>
             <option value="pending">Chờ duyệt</option>
@@ -105,13 +101,12 @@ const AdminPosts = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Tìm kiếm bài viết..."
-              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
       </div>
 
-      {/* Bảng bài viết */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -152,7 +147,10 @@ const AdminPosts = () => {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <img
-                        src={post.author?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                        src={
+                          post.author?.avatar ||
+                          'https://ui-avatars.com/api/?background=random&bold=true'
+                        }
                         alt={post.author?.fullName}
                         className="w-8 h-8 rounded-full object-cover"
                       />
@@ -168,10 +166,13 @@ const AdminPosts = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1">
-                      <span className={`text-xs px-2 py-1 rounded-full inline-block w-fit ${
-                        post.isApproved ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
-                        'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
-                      }`}>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full inline-block w-fit ${
+                          post.isApproved
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        }`}
+                      >
                         {post.isApproved ? 'Đã duyệt' : 'Chờ duyệt'}
                       </span>
                       {post.isReported && (
@@ -187,7 +188,6 @@ const AdminPosts = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      {/* Xem chi tiết */}
                       <button
                         onClick={() => setSelectedPost(post)}
                         className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -195,8 +195,6 @@ const AdminPosts = () => {
                       >
                         <FiEye className="w-4 h-4 text-gray-500" />
                       </button>
-
-                      {/* Duyệt bài viết */}
                       {!post.isApproved && (
                         <>
                           <button
@@ -215,8 +213,6 @@ const AdminPosts = () => {
                           </button>
                         </>
                       )}
-
-                      {/* Xóa bài viết */}
                       <button
                         onClick={() => handleDelete(post._id)}
                         className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -232,7 +228,6 @@ const AdminPosts = () => {
           </table>
         </div>
 
-        {/* Phân trang */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -240,14 +235,14 @@ const AdminPosts = () => {
             </p>
             <div className="flex gap-2">
               <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50"
               >
                 Trước
               </button>
               <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 disabled:opacity-50"
               >
@@ -258,7 +253,6 @@ const AdminPosts = () => {
         )}
       </div>
 
-      {/* Modal xem chi tiết */}
       {selectedPost && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -276,7 +270,10 @@ const AdminPosts = () => {
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-3">
                 <img
-                  src={selectedPost.author?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                  src={
+                    selectedPost.author?.avatar ||
+                    'https://ui-avatars.com/api/?background=random&bold=true'
+                  }
                   alt={selectedPost.author?.fullName}
                   className="w-10 h-10 rounded-full object-cover"
                 />
@@ -295,7 +292,10 @@ const AdminPosts = () => {
               {selectedPost.media && selectedPost.media.length > 0 && (
                 <div className="grid grid-cols-2 gap-2">
                   {selectedPost.media.map((item, index) => (
-                    <div key={index} className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                    <div
+                      key={index}
+                      className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden"
+                    >
                       {item.type === 'image' ? (
                         <img
                           src={item.url}

@@ -1,16 +1,16 @@
 // ============================================
-// FILE: client/src/components/notifications/Notifications.jsx
+// FILE: src/components/notifications/Notifications.jsx
 // MÔ TẢ: Trang thông báo
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useNotifications } from '../../hooks/useNotifications';
 import { timeAgo } from '../../utils/helpers';
-import { 
-  FiBell, 
-  FiCheck, 
+import {
+  FiBell,
+  FiCheck,
   FiTrash2,
   FiHeart,
   FiMessageSquare,
@@ -33,19 +33,17 @@ const Notifications = () => {
 
   const [filter, setFilter] = useState('all');
 
-  // Lọc thông báo
-  const filteredNotifications = notifications.filter(notif => {
+  const filteredNotifications = notifications.filter((notif) => {
     if (filter === 'unread') return !notif.isRead;
     return true;
   });
 
-  // Icon cho từng loại thông báo
   const getIcon = (type) => {
     const icons = {
       like: <FiHeart className="w-5 h-5 text-red-500" />,
       comment: <FiMessageSquare className="w-5 h-5 text-blue-500" />,
       share: <FiShare2 className="w-5 h-5 text-green-500" />,
-      friend_request: <FiUserPlus className="w-5 h-5 text-primary-500" />,
+      friend_request: <FiUserPlus className="w-5 h-5 text-blue-500" />,
       friend_accept: <FiUserPlus className="w-5 h-5 text-green-500" />,
       group_invite: <FiUsers className="w-5 h-5 text-purple-500" />,
       group_join: <FiUsers className="w-5 h-5 text-orange-500" />,
@@ -62,11 +60,10 @@ const Notifications = () => {
   return (
     <>
       <Helmet>
-        <title>Thông báo - Social Network</title>
+        <title>Thông báo - VibeSpace</title>
       </Helmet>
 
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -80,10 +77,7 @@ const Notifications = () => {
           </div>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="btn-secondary text-sm"
-              >
+              <button onClick={markAllAsRead} className="btn-secondary text-sm">
                 <FiCheck className="w-4 h-4 mr-2" />
                 Đánh dấu đã đọc
               </button>
@@ -91,13 +85,12 @@ const Notifications = () => {
           </div>
         </div>
 
-        {/* Filters */}
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               filter === 'all'
-                ? 'bg-primary-500 text-white'
+                ? 'bg-blue-500 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -107,7 +100,7 @@ const Notifications = () => {
             onClick={() => setFilter('unread')}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               filter === 'unread'
-                ? 'bg-primary-500 text-white'
+                ? 'bg-blue-500 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
@@ -115,7 +108,6 @@ const Notifications = () => {
           </button>
         </div>
 
-        {/* Danh sách thông báo */}
         {filteredNotifications.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
             <FiBell className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -131,14 +123,16 @@ const Notifications = () => {
               <div
                 key={notification._id}
                 className={`flex items-start gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-shadow ${
-                  !notification.isRead ? 'border-l-4 border-primary-500' : ''
+                  !notification.isRead ? 'border-l-4 border-blue-500' : ''
                 }`}
               >
-                {/* Avatar */}
                 <div className="flex-shrink-0">
                   {notification.sender ? (
                     <img
-                      src={notification.sender.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
+                      src={
+                        notification.sender.avatar ||
+                        'https://ui-avatars.com/api/?background=random&bold=true'
+                      }
                       alt={notification.sender.fullName}
                       className="w-10 h-10 rounded-full object-cover"
                     />
@@ -149,17 +143,15 @@ const Notifications = () => {
                   )}
                 </div>
 
-                {/* Nội dung */}
                 <div className="flex-1 min-w-0">
                   {notification.sender ? (
                     <p className="text-sm text-gray-900 dark:text-white">
                       <Link
                         to={`/profile/${notification.sender.username}`}
-                        className="font-medium hover:text-primary-500"
+                        className="font-medium hover:text-blue-500"
                       >
                         {notification.sender.fullName}
-                      </Link>
-                      {' '}
+                      </Link>{' '}
                       {notification.content}
                     </p>
                   ) : (
@@ -172,12 +164,11 @@ const Notifications = () => {
                   </p>
                 </div>
 
-                {/* Actions */}
                 <div className="flex-shrink-0 flex items-center gap-1">
                   {!notification.isRead && (
                     <button
                       onClick={() => markAsRead(notification._id)}
-                      className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-400 hover:text-primary-500"
+                      className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-400 hover:text-blue-500"
                       title="Đánh dấu đã đọc"
                     >
                       <FiCheck className="w-4 h-4" />

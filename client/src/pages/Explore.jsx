@@ -1,6 +1,6 @@
 // ============================================
-// FILE: client/src/pages/Explore.jsx
-// MÔ TẢ: Trang khám phá - Tìm kiếm và xu hướng
+// FILE: src/pages/Explore.jsx
+// MÔ TẢ: Trang khám phá
 // ============================================
 
 import React, { useState, useEffect } from 'react';
@@ -12,9 +12,6 @@ import PostCard from '../components/feed/PostCard';
 import { FiSearch, FiTrendingUp, FiHash } from 'react-icons/fi';
 
 const Explore = () => {
-  // ============================================
-  // Khởi tạo hooks và state
-  // ============================================
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const initialQuery = queryParams.get('q') || '';
@@ -25,9 +22,6 @@ const Explore = () => {
   const [trending, setTrending] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
 
-  // ============================================
-  // Tìm kiếm
-  // ============================================
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -45,9 +39,6 @@ const Explore = () => {
     }
   };
 
-  // ============================================
-  // Lấy xu hướng
-  // ============================================
   useEffect(() => {
     const fetchTrending = async () => {
       try {
@@ -60,9 +51,6 @@ const Explore = () => {
     fetchTrending();
   }, []);
 
-  // ============================================
-  // Effect: Tìm kiếm khi có query từ URL
-  // ============================================
   useEffect(() => {
     if (initialQuery) {
       handleSearch(new Event('submit'));
@@ -72,8 +60,8 @@ const Explore = () => {
   return (
     <>
       <Helmet>
-        <title>Khám phá - Social Network</title>
-        <meta name="description" content="Khám phá nội dung mới trên Social Network" />
+        <title>Khám phá - VibeSpace</title>
+        <meta name="description" content="Khám phá nội dung mới trên VibeSpace" />
       </Helmet>
 
       <div className="max-w-4xl mx-auto">
@@ -86,7 +74,7 @@ const Explore = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm kiếm bài viết, người dùng, nhóm..."
-              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </form>
@@ -99,7 +87,7 @@ const Explore = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab
-                  ? 'bg-primary-500 text-white'
+                  ? 'bg-blue-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
@@ -133,7 +121,7 @@ const Explore = () => {
               /* Xu hướng */
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <FiTrendingUp className="text-primary-500" />
+                  <FiTrendingUp className="text-blue-500" />
                   Xu hướng hôm nay
                 </h2>
                 <div className="space-y-3">

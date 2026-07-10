@@ -1,49 +1,60 @@
 // ============================================
-// FILE: client/src/components/feed/PostCard.jsx
-// MÔ TẢ: Hiển thị một bài viết đơn lẻ
+// FILE: src/components/feed/PostCard.jsx
+// MÔ TẢ: Hiển thị một bài viết đơn lẻ - CÓ MENU GIỐNG ẢNH
 // ============================================
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
-import { useAuth } from '../../hooks/useAuth';
 import { timeAgo } from '../../utils/helpers';
-import { 
-  FiHeart, 
-  FiMessageSquare, 
-  FiShare2, 
+import {
+  FiHeart,
+  FiMessageSquare,
+  FiShare2,
   FiMoreHorizontal,
-  FiThumbsUp,
-  FiSmile,
   FiEdit2,
   FiTrash2,
   FiBookmark,
   FiFlag,
+  FiThumbsUp,
+  FiMusic,
+  FiVolume2,
+  FiVolumeX,
+  FiPlay,
+  FiPause,
+  FiBell,
+  FiAlertCircle,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-const PostCard = ({ post, onUpdate, onDelete }) => {
+const PostCard = ({ post, currentUser, onUpdate, onDelete, onEdit }) => {
   // ============================================
-  // Khởi tạo hooks và state
+  // State
   // ============================================
-  const { user } = useAuth();
   const [showActions, setShowActions] = useState(false);
   const [showComment, setShowComment] = useState(false);
   const [commentContent, setCommentContent] = useState('');
   const [comments, setComments] = useState(post.comments || []);
   const [likeLoading, setLikeLoading] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
+  
+  // Audio player state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [audioVolume, setAudioVolume] = useState(post?.audio?.settings?.volume || 1);
+  const [isMuted, setIsMuted] = useState(post?.audio?.settings?.muted || false);
+  const audioRef = React.useRef(null);
 
   // ============================================
-  // Kiểm tra đã like chưa
+  // Computed values
   // ============================================
-  const isLiked = post.likes?.some(like => like.user === user?._id);
+  const isLiked = post.likes?.some((like) => like.user === currentUser?._id);
   const likeCount = post.stats?.likes || 0;
   const commentCount = post.stats?.comments || 0;
   const shareCount = post.stats?.shares || 0;
 
   // ============================================
-  // Xử lý like bài viết
+  // Xử lý Like
   // ============================================
   const handleLike = async () => {
     if (likeLoading) return;
@@ -54,15 +65,15 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
         await api.delete(`/posts/${post._id}/like`);
         const updatedPost = {
           ...post,
-          likes: post.likes.filter(like => like.user !== user?._id),
+          likes: post.likes.filter((like) => like.user !== currentUser?._id),
           stats: { ...post.stats, likes: post.stats.likes - 1 },
         };
         if (onUpdate) onUpdate(updatedPost);
       } else {
-        const response = await api.post(`/posts/${post._id}/like`);
+        await api.post(`/posts/${post._id}/like`);
         const updatedPost = {
           ...post,
-          likes: [...post.likes, { user: user?._id }],
+          likes: [...post.likes, { user: currentUser?._id }],
           stats: { ...post.stats, likes: post.stats.likes + 1 },
         };
         if (onUpdate) onUpdate(updatedPost);
@@ -76,7 +87,7 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
   };
 
   // ============================================
-  // Xử lý bình luận
+  // Xử lý Comment
   // ============================================
   const handleComment = async (e) => {
     e.preventDefault();
@@ -88,10 +99,9 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
         content: commentContent,
       });
       const newComment = response.comment;
-      setComments(prev => [...prev, newComment]);
+      setComments((prev) => [...prev, newComment]);
       setCommentContent('');
-      
-      // Cập nhật số lượng comment
+
       const updatedPost = {
         ...post,
         stats: { ...post.stats, comments: post.stats.comments + 1 },
@@ -106,7 +116,7 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
   };
 
   // ============================================
-  // Xử lý xóa bài viết
+  // Xử lý Xóa bài viết
   // ============================================
   const handleDelete = async () => {
     if (!confirm('Bạn có chắc muốn xóa bài viết này?')) return;
@@ -121,8 +131,58 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
     }
   };
 
+  // ============================================
+  // Xử lý Audio
+  // ============================================
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      setAudioProgress(progress);
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setAudioVolume(newVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : newVolume;
+    }
+  };
+
+  const toggleMute = () => {
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    if (audioRef.current) {
+      audioRef.current.volume = newMuted ? 0 : audioVolume;
+    }
+  };
+
+  // ============================================
+  // Lấy URL media đúng
+  // ============================================
+  const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `http://localhost:5000${url}`;
+  };
+
+  // ============================================
+  // Render
+  // ============================================
   return (
-    <div className="post-card">
+    <div className="bg-white dark:bg-[#242526] rounded-xl shadow-sm p-4 border border-gray-200 dark:border-[#3E4042] transition-colors duration-200">
+      
       {/* ===== PHẦN HEADER ===== */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -130,17 +190,17 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
             <img
               src={post.author?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
               alt={post.author?.fullName}
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-10 h-10 rounded-full object-cover border-2 border-[#0866FF]"
             />
           </Link>
           <div>
             <Link
               to={`/profile/${post.author?.username}`}
-              className="font-semibold text-gray-900 dark:text-white hover:text-primary-500"
+              className="font-semibold text-gray-900 dark:text-white hover:text-[#0866FF]"
             >
               {post.author?.fullName}
             </Link>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-[#B0B3B8]">
               {timeAgo(post.createdAt)}
               {post.privacy === 'only-me' && ' · Chỉ mình tôi'}
               {post.privacy === 'friends' && ' · Bạn bè'}
@@ -148,63 +208,140 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
           </div>
         </div>
 
-        {/* Nút actions */}
+        {/* ===== NÚT 3 CHẤM - MENU GIỐNG ẢNH ===== */}
         <div className="relative">
           <button
             onClick={() => setShowActions(!showActions)}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors text-gray-500 dark:text-[#B0B3B8]"
           >
-            <FiMoreHorizontal className="w-5 h-5 text-gray-500" />
+            <FiMoreHorizontal className="w-5 h-5" />
           </button>
 
           {showActions && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
-              {/* Edit post - only for author */}
-              {post.author?._id === user?._id && (
-                <button
-                  className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700"
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowActions(false)}
+              />
+              <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-[#242526] rounded-xl shadow-lg border border-gray-200 dark:border-[#3E4042] py-1 z-20">
+                {/* Quan tâm */}
+                <button 
+                  onClick={() => {
+                    setShowActions(false);
+                    toast.success('Đã quan tâm bài viết này');
+                  }}
+                  className="w-full px-4 py-2.5 text-left flex items-start gap-3 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
                 >
-                  <FiEdit2 className="w-4 h-4" />
-                  <span>Chỉnh sửa</span>
+                  <FiHeart className="w-5 h-5 text-[#0866FF] mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Quan tâm</p>
+                    <p className="text-xs text-gray-500 dark:text-[#B0B3B8]">Bạn sẽ nhìn thấy nhiều bài viết tương tự hơn.</p>
+                  </div>
                 </button>
-              )}
-
-              {/* Save post */}
-              <button
-                className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <FiBookmark className="w-4 h-4" />
-                <span>Lưu bài viết</span>
-              </button>
-
-              {/* Report post */}
-              <button
-                className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <FiFlag className="w-4 h-4" />
-                <span>Báo cáo</span>
-              </button>
-
-              {/* Delete post - only for author */}
-              {post.author?._id === user?._id && (
-                <button
-                  onClick={handleDelete}
-                  className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"
+                
+                {/* Không quan tâm */}
+                <button 
+                  onClick={() => {
+                    setShowActions(false);
+                    toast.success('Đã bỏ qua bài viết này');
+                  }}
+                  className="w-full px-4 py-2.5 text-left flex items-start gap-3 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
                 >
-                  <FiTrash2 className="w-4 h-4" />
-                  <span>Xóa bài viết</span>
+                  <FiHeart className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Không quan tâm</p>
+                    <p className="text-xs text-gray-500 dark:text-[#B0B3B8]">Bạn sẽ nhìn thấy ít bài viết tương tự hơn.</p>
+                  </div>
                 </button>
-              )}
-            </div>
+                
+                {/* Lưu bài viết */}
+                <button 
+                  onClick={() => {
+                    setShowActions(false);
+                    toast.success('Đã lưu bài viết');
+                  }}
+                  className="w-full px-4 py-2.5 text-left flex items-start gap-3 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
+                >
+                  <FiBookmark className="w-5 h-5 text-[#0866FF] mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Lưu bài viết</p>
+                    <p className="text-xs text-gray-500 dark:text-[#B0B3B8]">Thêm vào danh sách mục đã lưu.</p>
+                  </div>
+                </button>
+                
+                {/* Bật thông báo */}
+                <button 
+                  onClick={() => {
+                    setShowActions(false);
+                    toast.success('Đã bật thông báo cho bài viết này');
+                  }}
+                  className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
+                >
+                  <FiBell className="w-5 h-5 text-gray-500" />
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Bật thông báo về bài viết này</p>
+                </button>
+                
+                {/* Tại sao tôi nhìn thấy bài viết này? */}
+                <button 
+                  onClick={() => {
+                    setShowActions(false);
+                    toast.info('Bài viết được đề xuất dựa trên sở thích của bạn');
+                  }}
+                  className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
+                >
+                  <FiAlertCircle className="w-5 h-5 text-gray-500" />
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Tại sao tôi nhìn thấy bài viết này?</p>
+                </button>
+                
+                {/* Nhúng */}
+                <button 
+                  onClick={() => {
+                    setShowActions(false);
+                    const embedCode = `<iframe src="${window.location.origin}/post/${post._id}" width="100%" height="400"></iframe>`;
+                    navigator.clipboard.writeText(embedCode);
+                    toast.success('Đã sao chép mã nhúng');
+                  }}
+                  className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
+                >
+                  <FiShare2 className="w-5 h-5 text-gray-500" />
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Nhúng</p>
+                </button>
+                
+                {/* Chỉnh sửa - Chỉ hiện cho chủ bài viết */}
+                {post.author?._id === currentUser?._id && (
+                  <>
+                    <div className="border-t border-gray-200 dark:border-[#3E4042] my-1"></div>
+                    <button
+                      onClick={() => {
+                        setShowActions(false);
+                        if (onEdit) onEdit(post);
+                      }}
+                      className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors"
+                    >
+                      <FiEdit2 className="w-5 h-5 text-[#0866FF]" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">Chỉnh sửa bài viết</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowActions(false);
+                        handleDelete();
+                      }}
+                      className="w-full px-4 py-2.5 text-left flex items-center gap-3 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                    >
+                      <FiTrash2 className="w-5 h-5 text-red-500" />
+                      <span className="text-sm font-medium text-red-500">Xóa bài viết</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
 
       {/* ===== PHẦN NỘI DUNG ===== */}
       <div className="mt-3">
-        <p className="text-gray-900 dark:text-white whitespace-pre-wrap">
-          {post.content}
-        </p>
+        <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{post.content}</p>
         
         {/* Media */}
         {post.media && post.media.length > 0 && (
@@ -213,13 +350,13 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
               <div key={index} className={post.media.length === 3 && index === 0 ? 'col-span-2' : ''}>
                 {item.type === 'image' ? (
                   <img
-                    src={item.url}
+                    src={getMediaUrl(item.url)}
                     alt={item.alt || 'Post image'}
                     className="w-full h-auto object-cover"
                   />
                 ) : (
                   <video
-                    src={item.url}
+                    src={getMediaUrl(item.url)}
                     controls
                     className="w-full h-auto"
                   />
@@ -228,10 +365,73 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
             ))}
           </div>
         )}
+
+        {/* ===== AUDIO ===== */}
+        {post.audio && post.audio.url && (
+          <div className="mt-3 p-3 bg-gray-100 dark:bg-[#18191A] rounded-lg border border-gray-200 dark:border-[#3E4042]">
+            <div className="flex items-center gap-3">
+              <FiMusic className="w-5 h-5 text-[#0866FF] flex-shrink-0" />
+              
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <button
+                    onClick={togglePlay}
+                    className="text-gray-700 dark:text-gray-300 hover:text-[#0866FF] transition-colors"
+                  >
+                    {isPlaying ? <FiPause className="w-4 h-4" /> : <FiPlay className="w-4 h-4" />}
+                  </button>
+                  
+                  <div className="flex-1 h-1 bg-gray-300 dark:bg-[#3E4042] rounded-full overflow-hidden cursor-pointer">
+                    <div
+                      className="h-full bg-[#0866FF] transition-all duration-100"
+                      style={{ width: `${audioProgress}%` }}
+                    />
+                  </div>
+                  
+                  <span className="text-xs text-gray-500 dark:text-[#B0B3B8] min-w-[40px]">
+                    {post.audio.duration ? `${Math.floor(post.audio.duration)}s` : '--'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={toggleMute}
+                    className="text-gray-500 hover:text-gray-700 dark:text-[#B0B3B8] dark:hover:text-white transition-colors"
+                  >
+                    {isMuted ? <FiVolumeX className="w-4 h-4" /> : <FiVolume2 className="w-4 h-4" />}
+                  </button>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={audioVolume}
+                    onChange={handleVolumeChange}
+                    className="w-16 h-1 bg-gray-300 dark:bg-[#3E4042] rounded-lg appearance-none cursor-pointer accent-[#0866FF]"
+                  />
+                  <span className="text-xs text-gray-500 dark:text-[#B0B3B8] min-w-[30px]">
+                    {Math.round(audioVolume * 100)}%
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-[#B0B3B8] truncate flex-1 text-right">
+                    {post.audio.name || 'Nhạc nền'}
+                  </span>
+                </div>
+              </div>
+              
+              <audio
+                ref={audioRef}
+                src={getMediaUrl(post.audio.url)}
+                onTimeUpdate={handleTimeUpdate}
+                onEnded={() => setIsPlaying(false)}
+                loop={post.audio.settings?.loop || false}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ===== PHẦN TƯƠNG TÁC ===== */}
-      <div className="mt-3 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+      <div className="mt-3 flex items-center justify-between text-sm text-gray-500 dark:text-[#B0B3B8]">
         <div className="flex items-center gap-2">
           <span>{likeCount > 0 && `${likeCount} lượt thích`}</span>
         </div>
@@ -242,29 +442,29 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
       </div>
 
       {/* ===== PHẦN NÚT TƯƠNG TÁC ===== */}
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-[#3E4042]">
         <button
           onClick={handleLike}
           disabled={likeLoading}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            isLiked ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors flex-1 justify-center ${
+            isLiked
+              ? 'text-[#0866FF] bg-gray-100 dark:bg-[#3A3B3C]'
+              : 'text-gray-500 dark:text-[#B0B3B8] hover:bg-gray-100 dark:hover:bg-[#3A3B3C]'
           }`}
         >
-          <FiHeart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+          <FiThumbsUp className={`w-5 h-5 ${isLiked ? 'fill-[#0866FF]' : ''}`} />
           <span>{isLiked ? 'Đã thích' : 'Thích'}</span>
         </button>
 
         <button
           onClick={() => setShowComment(!showComment)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors flex-1 justify-center text-gray-500 dark:text-[#B0B3B8]"
         >
           <FiMessageSquare className="w-5 h-5" />
           <span>Bình luận</span>
         </button>
 
-        <button
-          className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
+        <button className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#3A3B3C] transition-colors flex-1 justify-center text-gray-500 dark:text-[#B0B3B8]">
           <FiShare2 className="w-5 h-5" />
           <span>Chia sẻ</span>
         </button>
@@ -272,7 +472,7 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
 
       {/* ===== PHẦN BÌNH LUẬN ===== */}
       {showComment && (
-        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-[#3E4042]">
           {/* Danh sách bình luận */}
           <div className="space-y-3 max-h-60 overflow-y-auto">
             {comments.map((comment) => (
@@ -280,21 +480,21 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
                 <img
                   src={comment.author?.avatar || 'https://ui-avatars.com/api/?background=random&bold=true'}
                   alt={comment.author?.fullName}
-                  className="w-8 h-8 rounded-full object-cover"
+                  className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-[#3E4042]"
                 />
                 <div className="flex-1">
-                  <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2">
+                  <div className="bg-gray-100 dark:bg-[#18191A] rounded-lg px-3 py-2">
                     <p className="font-medium text-sm text-gray-900 dark:text-white">
                       {comment.author?.fullName}
                     </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-gray-700 dark:text-[#B0B3B8]">
                       {comment.content}
                     </p>
                   </div>
-                  <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-[#B0B3B8]">
                     <span>{timeAgo(comment.createdAt)}</span>
-                    <button>Thích</button>
-                    <button>Trả lời</button>
+                    <button className="hover:text-gray-700 dark:hover:text-white">Thích</button>
+                    <button className="hover:text-gray-700 dark:hover:text-white">Trả lời</button>
                   </div>
                 </div>
               </div>
@@ -314,7 +514,7 @@ const PostCard = ({ post, onUpdate, onDelete }) => {
             <button
               type="submit"
               disabled={!commentContent.trim() || commentLoading}
-              className="btn-primary py-2 px-4 disabled:opacity-50"
+              className="bg-[#0866FF] hover:bg-[#1877F2] text-white font-bold rounded-lg py-2 px-4 disabled:opacity-50 transition-colors"
             >
               {commentLoading ? (
                 <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />

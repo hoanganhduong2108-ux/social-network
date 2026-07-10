@@ -1,3 +1,8 @@
+// ============================================
+// FILE: src/hooks/useSocket.js
+// MÔ TẢ: Hook sử dụng SocketContext
+// ============================================
+
 import { useContext } from 'react';
 import { SocketContext } from '../context/SocketContext';
 

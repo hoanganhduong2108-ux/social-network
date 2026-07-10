@@ -1,5 +1,5 @@
 // ============================================
-// FILE: client/src/components/admin/AdminDashboard.jsx
+// FILE: src/components/admin/AdminDashboard.jsx
 // MÔ TẢ: Bảng điều khiển quản trị
 // ============================================
 
@@ -23,16 +23,10 @@ import {
 } from 'react-icons/fi';
 
 const AdminDashboard = () => {
-  // ============================================
-  // Khởi tạo hooks và state
-  // ============================================
   const location = useLocation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ============================================
-  // Lấy thống kê
-  // ============================================
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -47,9 +41,6 @@ const AdminDashboard = () => {
     fetchStats();
   }, []);
 
-  // ============================================
-  // Menu admin
-  // ============================================
   const menuItems = [
     { path: '/admin', icon: FiHome, label: 'Tổng quan' },
     { path: '/admin/users', icon: FiUsers, label: 'Người dùng' },
@@ -60,16 +51,10 @@ const AdminDashboard = () => {
     { path: '/admin/settings', icon: FiSettings, label: 'Cài đặt' },
   ];
 
-  // ============================================
-  // Render loading
-  // ============================================
   if (loading) {
     return <Loading text="Đang tải dữ liệu..." fullScreen />;
   }
 
-  // ============================================
-  // Kiểm tra route hiện tại
-  // ============================================
   const isActive = (path) => {
     if (path === '/admin') {
       return location.pathname === path;
@@ -80,11 +65,10 @@ const AdminDashboard = () => {
   return (
     <>
       <Helmet>
-        <title>Quản trị - Social Network</title>
+        <title>Quản trị - VibeSpace</title>
       </Helmet>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar admin */}
         <div className="lg:w-64 flex-shrink-0">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sticky top-20">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
@@ -97,7 +81,7 @@ const AdminDashboard = () => {
                   to={item.path}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                     isActive(item.path)
-                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20'
+                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
@@ -109,7 +93,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Nội dung chính */}
         <div className="flex-1">
           <Routes>
             <Route path="/" element={<AdminOverview stats={stats} />} />
@@ -124,13 +107,8 @@ const AdminDashboard = () => {
   );
 };
 
-// ============================================
-// Component tổng quan
-// ============================================
+// Component AdminOverview
 const AdminOverview = ({ stats }) => {
-  // ============================================
-  // Card thống kê
-  // ============================================
   const statCards = [
     { label: 'Tổng người dùng', value: stats?.totalUsers || 0, color: 'blue' },
     { label: 'Người dùng hoạt động', value: stats?.activeUsers || 0, color: 'green' },
@@ -151,20 +129,15 @@ const AdminOverview = ({ stats }) => {
         Tổng quan
       </h1>
 
-      {/* Thống kê */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {statCards.map((card, index) => (
-          <div
-            key={index}
-            className={`p-4 rounded-xl ${colorClasses[card.color]}`}
-          >
+          <div key={index} className={`p-4 rounded-xl ${colorClasses[card.color]}`}>
             <p className="text-sm">{card.label}</p>
             <p className="text-2xl font-bold">{card.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Hoạt động gần đây */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
           Hoạt động gần đây
@@ -175,7 +148,7 @@ const AdminOverview = ({ stats }) => {
               key={index}
               className="flex items-start gap-3 pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0"
             >
-              <div className="w-2 h-2 mt-2 rounded-full bg-primary-500 flex-shrink-0" />
+              <div className="w-2 h-2 mt-2 rounded-full bg-blue-500 flex-shrink-0" />
               <div>
                 <p className="text-sm text-gray-700 dark:text-gray-300">
                   {activity.description}

@@ -1,21 +1,27 @@
 // ============================================
-// FILE: client/src/components/messages/Messenger.jsx
-// MÔ TẢ: Trang tin nhắn
+// FILE: src/components/messages/Messenger.jsx
+// MÔ TẢ: Trang tin nhắn - SỬA LỖI HIỂN THỊ CHAT
 // ============================================
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../hooks/useSocket';
 import { api } from '../../services/api';
 import ChatList from './ChatList';
 import ChatWindow from './ChatWindow';
-import { FiMessageSquare } from 'react-icons/fi';
+import { FiMessageSquare, FiUserPlus } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 const Messenger = () => {
-  const { userId } = useParams();
+  const { userId: routeUserId } = useParams();
+  const location = useLocation();
+  // Ưu tiên userId từ route path parameter, nếu không có thì lấy từ query parameter (?user=...)
+  const userId = routeUserId || new URLSearchParams(location.search).get('user');
+  
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { socket } = useSocket();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -23,34 +29,85 @@ const Messenger = () => {
   const [loading, setLoading] = useState(true);
   const [typing, setTyping] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState({});
+  const [friendList, setFriendList] = useState([]);
   const messagesEndRef = useRef(null);
+
+  // Lấy danh sách bạn bè - chạy riêng để tránh dependency loop
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        // API interceptor trả về response.data trực tiếp nên không cần .data
+        const response = await api.get(`/users/${user?._id}/friends`);
+        setFriendList(response.friends || []);
+      } catch (error) {
+        console.error('Error fetching friends:', error);
+      }
+    };
+    if (user) {
+      fetchFriends();
+    }
+  }, [user]);
 
   // Lấy danh sách cuộc trò chuyện
   useEffect(() => {
     const fetchConversations = async () => {
       try {
+        setLoading(true);
+        // API interceptor trả về response.data trực tiếp
         const response = await api.get('/messages/conversations');
-        setConversations(response.data.conversations || []);
-        
-        // Nếu có userId từ URL, chọn cuộc trò chuyện đó
+        const convs = response.conversations || [];
+        setConversations(convs);
+
+        // Nếu có userId trong params, tìm cuộc trò chuyện với user đó
         if (userId) {
-          const conv = response.data.conversations.find(
-            c => c.user._id === userId
+          const conv = convs.find(
+            (c) => c.user && c.user._id?.toString() === userId.toString()
           );
           if (conv) {
+            // Đã có cuộc trò chuyện, chọn nó
             setSelectedConversation(conv);
+          } else {
+            // Chưa có cuộc trò chuyện - cố gắng lấy thông tin user từ API
+            try {
+              const userRes = await api.get(`/users/${userId}`);
+              const targetUser = userRes.user;
+              if (targetUser) {
+                // Tạo conversation tạm thời để mở cửa sổ chat
+                const newConv = {
+                  user: targetUser,
+                  lastMessage: null,
+                  unreadCount: 0,
+                };
+                setSelectedConversation(newConv);
+                // Thêm vào danh sách conversations nếu chưa có cuộc trò chuyện với người này (tránh bị trùng 2 đoạn chat)
+                setConversations(prev => {
+                  const exists = prev.some(c => c.user && c.user._id?.toString() === targetUser._id?.toString());
+                  if (exists) return prev;
+                  return [newConv, ...prev];
+                });
+              }
+            } catch (userErr) {
+              console.error('Error fetching user:', userErr);
+              toast.error('Không tìm thấy người dùng');
+              navigate('/messages');
+            }
           }
-        } else if (response.data.conversations.length > 0) {
-          setSelectedConversation(response.data.conversations[0]);
+        } else if (convs.length > 0) {
+          // Không có userId trong URL, chọn cuộc trò chuyện đầu tiên
+          setSelectedConversation(convs[0]);
         }
       } catch (error) {
         console.error('Error fetching conversations:', error);
+        toast.error('Không thể tải danh sách tin nhắn');
       } finally {
         setLoading(false);
       }
     };
-    fetchConversations();
-  }, [userId]);
+    if (user) {
+      fetchConversations();
+    }
+    // Chỉ phụ thuộc vào user và userId, không phụ thuộc friendList để tránh vòng lặp vô hạn
+  }, [user, userId, navigate]);
 
   // Lấy tin nhắn khi chọn cuộc trò chuyện
   useEffect(() => {
@@ -58,28 +115,32 @@ const Messenger = () => {
 
     const fetchMessages = async () => {
       try {
-        const response = await api.get(`/messages/${selectedConversation.user._id}`);
-        setMessages(response.data.messages || []);
+        const response = await api.get(
+          `/messages/${selectedConversation.user._id}`
+        );
+        setMessages(response.messages || []);
         scrollToBottom();
       } catch (error) {
         console.error('Error fetching messages:', error);
+        toast.error('Không thể tải tin nhắn');
       }
     };
     fetchMessages();
   }, [selectedConversation]);
 
-  // Xử lý tin nhắn mới từ socket
+  // Socket events
   useEffect(() => {
     if (!socket) return;
 
     socket.on('receive_message', (message) => {
-      if (selectedConversation?.user._id === message.sender._id) {
-        setMessages(prev => [...prev, message]);
+      const senderId = message.sender?._id || message.sender;
+      if (selectedConversation?.user?._id?.toString() === senderId?.toString()) {
+        setMessages((prev) => [...prev, message]);
         scrollToBottom();
       }
-      // Cập nhật danh sách cuộc trò chuyện
-      setConversations(prev => {
-        const index = prev.findIndex(c => c.user._id === message.sender._id);
+      // Cập nhật conversation
+      setConversations((prev) => {
+        const index = prev.findIndex((c) => c.user && c.user._id?.toString() === senderId?.toString());
         if (index > -1) {
           const updated = [...prev];
           updated[index] = {
@@ -93,35 +154,34 @@ const Messenger = () => {
     });
 
     socket.on('message_sent', ({ messageId, conversationId }) => {
-      // Cập nhật trạng thái tin nhắn
-      setMessages(prev =>
-        prev.map(msg =>
+      setMessages((prev) =>
+        prev.map((msg) =>
           msg._id === messageId ? { ...msg, sent: true } : msg
         )
       );
     });
 
     socket.on('message_read', ({ conversationId, userId }) => {
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.sender._id === userId ? { ...msg, read: true } : msg
+      setMessages((prev) =>
+        prev.map((msg) =>
+          (msg.sender?._id || msg.sender)?.toString() === userId?.toString() ? { ...msg, read: true } : msg
         )
       );
     });
 
     socket.on('user_typing', ({ userId, username, conversationId }) => {
-      if (selectedConversation?.user._id === userId) {
+      if (selectedConversation?.user?._id?.toString() === userId?.toString()) {
         setTyping(true);
         setTimeout(() => setTyping(false), 3000);
       }
     });
 
     socket.on('user_online', ({ userId, username }) => {
-      setOnlineUsers(prev => ({ ...prev, [userId]: true }));
+      setOnlineUsers((prev) => ({ ...prev, [userId]: true }));
     });
 
     socket.on('user_offline', ({ userId, username }) => {
-      setOnlineUsers(prev => ({ ...prev, [userId]: false }));
+      setOnlineUsers((prev) => ({ ...prev, [userId]: false }));
     });
 
     return () => {
@@ -134,14 +194,12 @@ const Messenger = () => {
     };
   }, [socket, selectedConversation]);
 
-  // Scroll xuống cuối
   const scrollToBottom = () => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
-  // Gửi tin nhắn
   const sendMessage = async (content, type = 'text', media = null) => {
     if (!selectedConversation) return;
 
@@ -153,13 +211,14 @@ const Messenger = () => {
         media,
       });
 
-      const newMessage = response.data.message;
-      setMessages(prev => [...prev, newMessage]);
+      const newMessage = response.message;
+      setMessages((prev) => [...prev, newMessage]);
       scrollToBottom();
 
-      // Cập nhật danh sách cuộc trò chuyện
-      setConversations(prev => {
-        const index = prev.findIndex(c => c.user._id === selectedConversation.user._id);
+      setConversations((prev) => {
+        const index = prev.findIndex(
+          (c) => c.user && c.user._id?.toString() === selectedConversation.user._id?.toString()
+        );
         if (index > -1) {
           const updated = [...prev];
           updated[index] = {
@@ -174,19 +233,20 @@ const Messenger = () => {
       return newMessage;
     } catch (error) {
       console.error('Error sending message:', error);
+      toast.error('Không thể gửi tin nhắn');
       throw error;
     }
   };
 
-  // Đánh dấu đã đọc
-  const markAsRead = (messageId) => {
-    // TODO: Implement mark as read
+  const handleSelectConversation = (conv) => {
+    setSelectedConversation(conv);
+    setMessages([]);
   };
 
   if (loading) {
     return (
       <div className="min-h-[600px] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
       </div>
     );
   }
@@ -194,22 +254,26 @@ const Messenger = () => {
   return (
     <>
       <Helmet>
-        <title>Tin nhắn - Social Network</title>
+        <title>Tin nhắn - VibeSpace</title>
       </Helmet>
 
       <div className="h-[calc(100vh-8rem)] bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
         <div className="flex h-full">
-          {/* Danh sách cuộc trò chuyện */}
+          {/* Chat List - truyền friendIds để phân loại bạn bè / người khác */}
           <div className="w-full md:w-80 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
             <ChatList
               conversations={conversations}
               selectedConversation={selectedConversation}
-              onSelectConversation={setSelectedConversation}
+              onSelectConversation={handleSelectConversation}
               onlineUsers={onlineUsers}
+              friendIds={[
+                ...(user?.friends || []).map(f => (f._id || f).toString()),
+                ...friendList.map(f => (f._id || f).toString())
+              ]}
             />
           </div>
 
-          {/* Cửa sổ chat */}
+          {/* Chat Window */}
           <div className="flex-1 flex flex-col">
             {selectedConversation ? (
               <ChatWindow
@@ -226,6 +290,13 @@ const Messenger = () => {
                   <FiMessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                   <p>Chọn một cuộc trò chuyện</p>
                   <p className="text-sm">hoặc tìm kiếm người dùng để bắt đầu</p>
+                  <button
+                    onClick={() => navigate('/friends')}
+                    className="mt-4 btn-primary flex items-center gap-2 mx-auto"
+                  >
+                    <FiUserPlus className="w-4 h-4" />
+                    Tìm bạn bè
+                  </button>
                 </div>
               </div>
             )}
