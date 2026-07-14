@@ -1,6 +1,6 @@
 // ============================================
 // FILE: backend/src/app.js
-// MÔ TẢ: Cấu hình ứng dụng Express - HOÀN CHỈNH
+// MÔ TẢ: Cấu hình ứng dụng Express - SỬA LỖI STATIC FILES
 // ============================================
 
 const express = require('express');
@@ -31,7 +31,9 @@ const audioRoutes = require('./routes/audioRoutes');
 
 const app = express();
 
-// Tạo thư mục uploads
+// ============================================
+// TẠO THƯ MỤC UPLOADS
+// ============================================
 const uploadDirs = [
   'uploads',
   'uploads/images',
@@ -40,7 +42,8 @@ const uploadDirs = [
   'uploads/avatars',
   'uploads/posts',
   'uploads/stories',
-  'uploads/covers'
+  'uploads/covers',
+  'uploads/groups',
 ];
 
 uploadDirs.forEach(dir => {
@@ -110,8 +113,12 @@ app.use(express.urlencoded({ extended: true, limit: '10gb' }));
 // ============================================
 // STATIC FILES - QUAN TRỌNG
 // ============================================
+// Phục vụ tất cả file trong thư mục uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Log để debug
 console.log('✅ Static files serving enabled for /uploads');
+console.log(`📁 Uploads path: ${path.join(__dirname, '../uploads')}`);
 
 // Logging
 app.use((req, res, next) => {

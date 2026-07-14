@@ -1,9 +1,9 @@
 // ============================================
 // FILE: src/components/pages/Pages.jsx
-// MÔ TẢ: Trang quản lý và hiển thị các Fanpage
+// MÔ TẢ: Trang quản lý và hiển thị các Fanpage - SỬA LỖI HOOKS
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { api } from '../../services/api';
@@ -11,6 +11,7 @@ import Loading from '../common/Loading';
 import CreatePage from './CreatePage';
 import PageDetail from './PageDetail';
 import { FiFlag, FiPlus, FiSearch } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 const Pages = () => {
   const { pageId } = useParams();
@@ -19,33 +20,79 @@ const Pages = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // ============================================
+  // QUAN TRỌNG: GỌI HACKS TRƯỚC KHI RETURN
+  // ============================================
+  
+  // FETCH PAGES
+  const fetchPages = useCallback(async () => {
+    try {
+      setLoading(true);
+      console.log('📖 Fetching pages...');
+      
+      const response = await api.get('/pages');
+      console.log('📖 Pages response:', response);
+      
+      let pagesData = [];
+      if (response && response.pages) {
+        pagesData = response.pages;
+      } else if (response && Array.isArray(response)) {
+        pagesData = response;
+      } else if (response && response.data && Array.isArray(response.data)) {
+        pagesData = response.data;
+      } else {
+        pagesData = response?.pages || response?.data || [];
+      }
+      
+      console.log('📖 Pages data:', pagesData);
+      setPages(pagesData);
+      
+    } catch (error) {
+      console.error('❌ Error fetching pages:', error);
+      toast.error('Không thể tải danh sách trang');
+      setPages([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // HANDLE PAGE CREATED
+  const handlePageCreated = (newPage) => {
+    console.log('📝 New page created:', newPage);
+    if (newPage) {
+      setPages(prev => [newPage, ...prev]);
+    }
+    setShowCreate(false);
+    toast.success('Đã tạo trang thành công!');
+  };
+
+  // EFFECT
+  useEffect(() => {
+    fetchPages();
+  }, [fetchPages]);
+
+  // ============================================
+  // SAU KHI GỌI XONG HACKS, MỚI XỬ LÝ RETURN
+  // ============================================
+  
+  // Nếu có pageId, hiển thị PageDetail
   if (pageId) {
     return <PageDetail pageId={pageId} />;
   }
 
-  useEffect(() => {
-    const fetchPages = async () => {
-      try {
-        const response = await api.get('/pages');
-        setPages(response.data.pages || []);
-      } catch (error) {
-        console.error('Error fetching pages:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPages();
-  }, []);
-
-  const filteredPages = pages.filter(
-    (page) =>
-      page.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      page.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  // Nếu đang loading
   if (loading) {
     return <Loading text="Đang tải trang..." />;
   }
+
+  // ============================================
+  // RENDER CHÍNH
+  // ============================================
+  const filteredPages = pages.filter(
+    (page) =>
+      page?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      page?.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <>
@@ -147,10 +194,7 @@ const Pages = () => {
         {showCreate && (
           <CreatePage
             onClose={() => setShowCreate(false)}
-            onCreated={(newPage) => {
-              setPages([newPage, ...pages]);
-              setShowCreate(false);
-            }}
+            onCreated={handlePageCreated}
           />
         )}
       </div>

@@ -9,7 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = () => {
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { login, user, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     emailOrUsername: '',
@@ -25,9 +25,9 @@ const Login = () => {
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
       console.log('✅ User already authenticated, redirecting to home...');
-      navigate('/', { replace: true });
+      navigate(user?.role === 'admin' || user?.role === 'super_admin' ? '/admin' : '/', { replace: true });
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, authLoading, navigate, user]);
 
   const handleChange = (e) => {
     setFormData({
@@ -56,7 +56,7 @@ const Login = () => {
       if (result.success) {
         console.log('✅ Login successful, redirecting...');
         setTimeout(() => {
-          navigate('/', { replace: true });
+          navigate(result.user?.role === 'admin' || result.user?.role === 'super_admin' ? '/admin' : '/', { replace: true });
         }, 100);
       } else {
         setError(result.error || 'Đăng nhập thất bại');

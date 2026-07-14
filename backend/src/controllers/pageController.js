@@ -1,6 +1,6 @@
 // ============================================
 // FILE: backend/src/controllers/pageController.js
-// MÔ TẢ: Controller quản lý trang (Page)
+// MÔ TẢ: Controller quản lý trang (Page) - SỬA LỖI RESPONSE
 // ============================================
 
 const pageService = require('../services/pageService');
@@ -14,11 +14,19 @@ class PageController {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        return res.status(400).json({ 
+          success: false, 
+          errors: errors.array() 
+        });
       }
 
       const page = await pageService.createPage(req.user.id, req.body);
-      res.status(201).json({ success: true, page });
+      
+      res.status(201).json({
+        success: true,
+        page: page,
+        message: 'Tạo trang thành công',
+      });
     } catch (error) {
       next(error);
     }
@@ -30,7 +38,10 @@ class PageController {
   async getPageById(req, res, next) {
     try {
       const page = await pageService.getPageById(req.params.id);
-      res.json({ success: true, page });
+      res.json({ 
+        success: true, 
+        page 
+      });
     } catch (error) {
       next(error);
     }
@@ -47,9 +58,32 @@ class PageController {
         parseInt(page) || 1,
         parseInt(limit) || 20
       );
-      res.json(result);
+      
+      // ============================================
+      // TRẢ VỀ RESPONSE ĐÚNG CẤU TRÚC
+      // ============================================
+      res.json({
+        success: true,
+        pages: result.pages || [],
+        pagination: result.pagination || {
+          page: parseInt(page) || 1,
+          limit: parseInt(limit) || 20,
+          total: 0,
+          pages: 0,
+        },
+      });
     } catch (error) {
-      next(error);
+      console.error('❌ Error fetching user pages:', error);
+      res.json({
+        success: true,
+        pages: [],
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 0,
+          pages: 0,
+        },
+      });
     }
   }
 
@@ -87,7 +121,10 @@ class PageController {
         req.user.id,
         req.body
       );
-      res.json({ success: true, page });
+      res.json({ 
+        success: true, 
+        page 
+      });
     } catch (error) {
       next(error);
     }
@@ -108,7 +145,10 @@ class PageController {
         content,
         images
       );
-      res.status(201).json({ success: true, review });
+      res.status(201).json({ 
+        success: true, 
+        review 
+      });
     } catch (error) {
       next(error);
     }

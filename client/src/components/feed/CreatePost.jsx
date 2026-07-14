@@ -1,6 +1,6 @@
 // ============================================
 // FILE: src/components/feed/CreatePost.jsx
-// MÔ TẢ: Component tạo bài viết - CÓ AUDIO TRIM 2 CHẤM TRÒN
+// MÔ TẢ: Component tạo bài viết - CÓ groupId
 // ============================================
 
 import React, { useState, useRef } from 'react';
@@ -23,7 +23,7 @@ import {
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) => {
+const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, groupId = null }) => {
   const { user } = useAuth();
   const [content, setContent] = useState(editingPost?.content || '');
   const [media, setMedia] = useState(editingPost?.media || []);
@@ -318,7 +318,7 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
   };
 
   // ============================================
-  // XỬ LÝ SUBMIT - SỬA LỖI GỬI MEDIA
+  // XỬ LÝ SUBMIT - THÊM groupId
   // ============================================
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -332,25 +332,20 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
 
     try {
       console.log('📝 Submitting post...');
-      console.log('📝 Media before submit:', JSON.stringify(media, null, 2));
-
-      // ============================================
-      // TẠO MEDIA DATA ĐÚNG ĐỊNH DẠNG CHO API
-      // ============================================
-      const mediaData = media.map(m => ({
-        type: m.type || 'image',
-        url: m.url,
-        publicId: m.publicId || '',
-        duration: m.duration || 0,
-        size: m.size || 0,
-      }));
-
-      console.log('📝 Media data to send:', JSON.stringify(mediaData, null, 2));
+      console.log('📝 groupId:', groupId);
+      console.log('📝 Content:', content);
+      console.log('📝 Media:', media);
+      console.log('📝 Audio:', audio);
 
       const postData = {
         content: content.trim(),
-        media: mediaData,
-        privacy: privacy,
+        media: media.map(m => ({
+          type: m.type,
+          url: m.url,
+          publicId: m.publicId,
+          duration: m.duration || 0,
+        })),
+        privacy,
         audio: audio ? {
           url: audio.url,
           publicId: audio.publicId,
@@ -364,9 +359,13 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
           name: audio.name,
           duration: audio.duration || 0,
         } : null,
+        // ============================================
+        // THÊM groupId NẾU CÓ
+        // ============================================
+        groupId: groupId || null,
       };
 
-      console.log('📝 Full post data:', JSON.stringify(postData, null, 2));
+      console.log('📝 Post data:', postData);
 
       let response;
       if (editingPost) {
@@ -387,7 +386,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
         console.log('📝 New post:', newPost);
         console.log('📝 New post media:', newPost.media);
         
-        // Reset form
         setContent('');
         setMedia([]);
         setAudio(null);
@@ -449,7 +447,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
           </div>
         </div>
 
-        {/* Thanh thời gian với 2 chấm tròn */}
         <div 
           ref={trimContainerRef}
           className="relative w-full h-10 bg-gray-200 dark:bg-[#3E4042] rounded-lg overflow-hidden cursor-pointer"
@@ -474,7 +471,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
             }
           }}
         >
-          {/* Phần được chọn */}
           <div 
             className="absolute top-0 h-full bg-[#0866FF]/30"
             style={{
@@ -482,8 +478,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
               width: `${trimWidth}%`,
             }}
           />
-
-          {/* Khu vực đã cắt bỏ */}
           <div 
             className="absolute top-0 h-full bg-gray-400/40 dark:bg-gray-600/40"
             style={{
@@ -499,7 +493,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
             }}
           />
 
-          {/* CHẤM TRÒN BẮT ĐẦU */}
           <div
             className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#0866FF] border-2 border-white shadow-lg cursor-ew-resize z-10 hover:scale-110 transition-transform"
             style={{
@@ -515,7 +508,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-[#0866FF]" />
           </div>
 
-          {/* CHẤM TRÒN KẾT THÚC */}
           <div
             className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#0866FF] border-2 border-white shadow-lg cursor-ew-resize z-10 hover:scale-110 transition-transform"
             style={{
@@ -531,7 +523,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-[#0866FF]" />
           </div>
 
-          {/* Vạch thời gian */}
           <div className="absolute bottom-1 left-0 right-0 flex justify-between px-2 text-[8px] text-gray-500 dark:text-[#B0B3B8]">
             <span>0s</span>
             <span>{Math.floor(audioDuration / 2)}s</span>
@@ -583,7 +574,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
           />
         </div>
 
-        {/* Media preview */}
         {media.length > 0 && (
           <div className="px-4 pb-2">
             <div className="grid grid-cols-2 gap-2">
@@ -620,7 +610,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
           </div>
         )}
 
-        {/* Audio preview with trim */}
         {audio && (
           <div className="px-4 pb-2">
             <div className="p-3 bg-gray-100 dark:bg-[#18191A] rounded-lg border border-gray-200 dark:border-[#3E4042]">
@@ -726,7 +715,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
           </div>
         )}
 
-        {/* Upload progress */}
         {loading && uploadProgress > 0 && uploadProgress < 100 && (
           <div className="px-4 pb-2">
             <div className="p-2 bg-gray-100 dark:bg-[#18191A] rounded-lg">
@@ -744,7 +732,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
           </div>
         )}
 
-        {/* Actions */}
         <div className="px-4 pb-2 pt-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -855,7 +842,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null }) 
           </div>
         </div>
 
-        {/* Editor Modal */}
         {showEditor && (
           <div className="p-4 border-t border-gray-200 dark:border-[#3E4042] bg-gray-50 dark:bg-[#18191A]">
             <div className="flex items-center gap-3 mb-3">

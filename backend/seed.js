@@ -57,7 +57,7 @@ const seedDatabase = async () => {
     // Hash password - QUAN TRỌNG: PHẢI HASH ĐÚNG
     // ============================================
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('123456', salt);
+    const hashedPassword = '123456';
     console.log('🔑 Password hashed successfully: 123456 ->', hashedPassword.substring(0, 30) + '...\n');
 
     // ============================================
@@ -65,7 +65,7 @@ const seedDatabase = async () => {
     // ============================================
     console.log('👤 Creating admin...');
     const admin = await Admin.create({
-      username: 'superadmin',
+      username: 'admin',
       email: 'admin@vibespace.com',
       password: hashedPassword,
       fullName: 'Super Admin',

@@ -1,6 +1,6 @@
 // ============================================
 // FILE: backend/src/models/Post.js
-// MÔ TẢ: Model bài viết - CÓ AUDIO
+// MÔ TẢ: Model bài viết - THÊM groupId
 // ============================================
 
 const mongoose = require('mongoose');
@@ -46,9 +46,6 @@ const postSchema = new mongoose.Schema(
         },
       },
     ],
-    // ============================================
-    // ÂM THANH - THÊM MỚI
-    // ============================================
     audio: {
       url: {
         type: String,
@@ -80,6 +77,15 @@ const postSchema = new mongoose.Schema(
         type: String,
         default: 'Nhạc nền',
       },
+    },
+    // ============================================
+    // NHÓM CHỨA BÀI VIẾT (NẾU CÓ)
+    // ============================================
+    groupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Group',
+      default: null,
+      index: true,
     },
     type: {
       type: String,
@@ -298,6 +304,7 @@ const postSchema = new mongoose.Schema(
 postSchema.index({ content: 'text', hashtags: 'text' });
 postSchema.index({ createdAt: -1 });
 postSchema.index({ author: 1, createdAt: -1 });
+postSchema.index({ groupId: 1, createdAt: -1 });
 
 postSchema.methods.updateStats = async function () {
   this.stats.likes = this.likes.length;

@@ -1,6 +1,6 @@
 // ============================================
 // FILE: backend/src/routes/pageRoutes.js
-// MÔ TẢ: Routes quản lý trang (Page)
+// MÔ TẢ: Routes quản lý trang (Page) - SỬA LỖI
 // ============================================
 
 const express = require('express');
@@ -22,15 +22,27 @@ const createPageValidation = [
     .withMessage('Danh mục là bắt buộc'),
 ];
 
-// Routes
-router.post('/', protect, createPageValidation, pageController.createPage);
+// ============================================
+// Routes - ĐẶT ĐÚNG THỨ TỰ
+// ============================================
+
+// Lấy danh sách trang của người dùng
 router.get('/', protect, pageController.getUserPages);
+
+// Tạo trang mới
+router.post('/', protect, createPageValidation, pageController.createPage);
+
+// Lấy thông tin trang theo ID (PHẢI ĐẶT SAU /)
 router.get('/:id', protect, pageController.getPageById);
+
+// Cập nhật trang
 router.put('/:id', protect, pageController.updatePage);
 
+// Theo dõi / Bỏ theo dõi trang
 router.post('/:id/follow', protect, pageController.followPage);
 router.delete('/:id/follow', protect, pageController.unfollowPage);
 
+// Thêm đánh giá
 router.post('/:id/review', protect, upload.array('images', 5), pageController.addReview);
 
 module.exports = router;

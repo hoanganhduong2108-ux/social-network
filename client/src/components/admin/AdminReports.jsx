@@ -32,8 +32,8 @@ const AdminReports = () => {
         const response = await api.get('/admin/reports', {
           params: { page, limit: 20 },
         });
-        setReports(response.data.reports || []);
-        setTotalPages(response.data.pagination?.pages || 1);
+        setReports(response.reports || []);
+        setTotalPages(response.pagination?.pages || 1);
       } catch (error) {
         console.error('Error fetching reports:', error);
         toast.error('Không thể tải danh sách báo cáo');

@@ -26,7 +26,7 @@ const AdminSettings = () => {
     const fetchSettings = async () => {
       try {
         const response = await api.get('/admin/settings');
-        setSettings(response.data.settings || settings);
+        setSettings(response.settings || settings);
       } catch (error) {
         console.error('Error fetching settings:', error);
         toast.error('Không thể tải cài đặt');

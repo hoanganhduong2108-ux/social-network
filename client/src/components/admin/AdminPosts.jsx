@@ -34,8 +34,8 @@ const AdminPosts = () => {
         const response = await api.get('/admin/posts', {
           params: { page, limit: 20, status: filter, search: searchTerm },
         });
-        setPosts(response.data.posts || []);
-        setTotalPages(response.data.pagination?.pages || 1);
+        setPosts(response.posts || []);
+        setTotalPages(response.pagination?.pages || 1);
       } catch (error) {
         console.error('Error fetching posts:', error);
         toast.error('Không thể tải danh sách bài viết');

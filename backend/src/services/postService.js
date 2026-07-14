@@ -1,6 +1,6 @@
 // ============================================
 // FILE: backend/src/services/postService.js
-// MÔ TẢ: Dịch vụ quản lý bài viết - SỬA LỖI MEDIA
+// MÔ TẢ: Dịch vụ quản lý bài viết - THÊM groupId
 // ============================================
 
 const Post = require('../models/Post');
@@ -12,27 +12,25 @@ const path = require('path');
 
 class PostService {
   /**
-   * Tạo bài viết mới - SỬA LỖI MEDIA
+   * Tạo bài viết mới - THÊM groupId
    */
   async createPost(userId, postData) {
     try {
       console.log('📝 Creating post for user:', userId);
       console.log('📝 Media received:', postData.media?.length || 0);
+      console.log('📝 Group ID:', postData.groupId);
       
       const user = await User.findById(userId);
       if (!user) {
         throw new Error('Người dùng không tồn tại');
       }
 
-      // ============================================
-      // XỬ LÝ MEDIA - QUAN TRỌNG
-      // ============================================
+      // Xử lý media
       let media = [];
       if (postData.media && Array.isArray(postData.media) && postData.media.length > 0) {
         console.log(`📷 Processing ${postData.media.length} media files`);
         
         for (const item of postData.media) {
-          // Kiểm tra item có url không
           if (item.url) {
             const mediaItem = {
               type: item.type || 'image',
@@ -52,7 +50,7 @@ class PostService {
 
       console.log(`📷 Final media count: ${media.length}`);
 
-      // Tạo bài viết
+      // Tạo bài viết với groupId
       const post = await Post.create({
         author: userId,
         content: postData.content || '',
@@ -67,10 +65,12 @@ class PostService {
         hashtags: postData.hashtags || [],
         mentions: postData.mentions || [],
         audio: postData.audio || null,
+        groupId: postData.groupId || null,
       });
 
       console.log('✅ Post created with ID:', post._id);
       console.log('✅ Post media count:', post.media.length);
+      console.log('✅ Post groupId:', post.groupId);
 
       // Cập nhật thống kê người dùng
       await User.findByIdAndUpdate(userId, {
@@ -100,11 +100,107 @@ class PostService {
       const populatedPost = await Post.findById(post._id)
         .populate('author', 'username fullName avatar isOnline')
         .populate('with', 'username fullName avatar')
-        .populate('mentions', 'username fullName avatar');
+        .populate('mentions', 'username fullName avatar')
+        .populate('groupId', 'name avatar');
 
       return populatedPost;
     } catch (error) {
       console.error('❌ Create post error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy bài viết trong nhóm
+   */
+  async getGroupPosts(groupId, page = 1, limit = 20) {
+    try {
+      const skip = (page - 1) * limit;
+
+      const posts = await Post.find({
+        groupId: groupId,
+        isDeleted: false,
+        isApproved: true,
+      })
+        .populate('author', 'username fullName avatar isOnline')
+        .populate('groupId', 'name avatar')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      const total = await Post.countDocuments({
+        groupId: groupId,
+        isDeleted: false,
+        isApproved: true,
+      });
+
+      return {
+        posts,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy bài viết trên bảng tin - KHÔNG LẤY BÀI VIẾT NHÓM
+   */
+  async getNewsFeed(userId, page = 1, limit = 20) {
+    try {
+      const skip = (page - 1) * limit;
+
+      const user = await User.findById(userId);
+      if (!user) {
+        throw new Error('Người dùng không tồn tại');
+      }
+
+      const friendIds = user.friends.map(id => id.toString());
+      const followingIds = user.following.map(id => id.toString());
+      const authorIds = [...new Set([...friendIds, ...followingIds, userId])];
+
+      const posts = await Post.find({
+        author: { $in: authorIds },
+        isApproved: true,
+        isDeleted: false,
+        groupId: { $eq: null },
+        $or: [
+          { author: userId },
+          { privacy: 'public' },
+          { privacy: 'friends', author: { $in: friendIds } },
+          { privacy: 'friends-of-friends' },
+          { privacy: 'only-me', author: userId },
+        ],
+      })
+        .populate('author', 'username fullName avatar isOnline')
+        .populate('with', 'username fullName avatar')
+        .populate('mentions', 'username fullName avatar')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      const total = await Post.countDocuments({
+        author: { $in: authorIds },
+        isApproved: true,
+        isDeleted: false,
+        groupId: { $eq: null },
+      });
+
+      return {
+        posts,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
       throw error;
     }
   }
@@ -118,6 +214,7 @@ class PostService {
         .populate('author', 'username fullName avatar')
         .populate('with', 'username fullName avatar')
         .populate('mentions', 'username fullName avatar')
+        .populate('groupId', 'name avatar')
         .populate({
           path: 'comments',
           options: { sort: { createdAt: -1 }, limit: 10 },
@@ -141,44 +238,27 @@ class PostService {
   }
 
   /**
-   * Lấy bài viết trên bảng tin
+   * Lấy bài viết của người dùng
    */
-  async getNewsFeed(userId, page = 1, limit = 20) {
+  async getUserPosts(userId, page = 1, limit = 20) {
     try {
       const skip = (page - 1) * limit;
 
-      const user = await User.findById(userId);
-      if (!user) {
-        throw new Error('Người dùng không tồn tại');
-      }
-
-      const friendIds = user.friends.map(id => id.toString());
-      const followingIds = user.following.map(id => id.toString());
-      const authorIds = [...new Set([...friendIds, ...followingIds, userId])];
-
       const posts = await Post.find({
-        author: { $in: authorIds },
-        isApproved: true,
+        author: userId,
         isDeleted: false,
-        $or: [
-          { author: userId },
-          { privacy: 'public' },
-          { privacy: 'friends', author: { $in: friendIds } },
-          { privacy: 'friends-of-friends' },
-          { privacy: 'only-me', author: userId },
-        ],
+        isApproved: true,
       })
-        .populate('author', 'username fullName avatar isOnline')
-        .populate('with', 'username fullName avatar')
-        .populate('mentions', 'username fullName avatar')
+        .populate('author', 'username fullName avatar')
+        .populate('groupId', 'name avatar')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit);
 
       const total = await Post.countDocuments({
-        author: { $in: authorIds },
-        isApproved: true,
+        author: userId,
         isDeleted: false,
+        isApproved: true,
       });
 
       return {
@@ -195,9 +275,7 @@ class PostService {
     }
   }
 
-  /**
-   * Cập nhật bài viết
-   */
+  // Cập nhật bài viết
   async updatePost(postId, userId, updateData) {
     try {
       const post = await Post.findById(postId);
@@ -225,7 +303,8 @@ class PostService {
       )
         .populate('author', 'username fullName avatar')
         .populate('with', 'username fullName avatar')
-        .populate('mentions', 'username fullName avatar');
+        .populate('mentions', 'username fullName avatar')
+        .populate('groupId', 'name avatar');
 
       return updatedPost;
     } catch (error) {
@@ -233,9 +312,7 @@ class PostService {
     }
   }
 
-  /**
-   * Xóa bài viết
-   */
+  // Xóa bài viết
   async deletePost(postId, userId) {
     try {
       const post = await Post.findById(postId);
@@ -261,9 +338,7 @@ class PostService {
     }
   }
 
-  /**
-   * Like bài viết
-   */
+  // Like bài viết
   async likePost(postId, userId, reaction = 'like') {
     try {
       const post = await Post.findById(postId);
@@ -319,9 +394,7 @@ class PostService {
     }
   }
 
-  /**
-   * Bỏ like bài viết
-   */
+  // Bỏ like bài viết
   async unlikePost(postId, userId) {
     try {
       const post = await Post.findById(postId);
@@ -345,9 +418,7 @@ class PostService {
     }
   }
 
-  /**
-   * Bình luận bài viết
-   */
+  // Bình luận bài viết
   async commentOnPost(postId, userId, content, parentCommentId = null, media = null) {
     try {
       const post = await Post.findById(postId);
@@ -414,9 +485,7 @@ class PostService {
     }
   }
 
-  /**
-   * Xóa bình luận
-   */
+  // Xóa bình luận
   async deleteComment(commentId, userId) {
     try {
       const comment = await Comment.findById(commentId);
@@ -446,9 +515,7 @@ class PostService {
     }
   }
 
-  /**
-   * Chia sẻ bài viết
-   */
+  // Chia sẻ bài viết
   async sharePost(postId, userId, customMessage = null) {
     try {
       const originalPost = await Post.findById(postId);
@@ -466,6 +533,7 @@ class PostService {
           originalAuthor: originalPost.author,
           customMessage: customMessage,
         },
+        groupId: originalPost.groupId || null,
       });
 
       originalPost.shares.push({ user: userId });
@@ -492,7 +560,8 @@ class PostService {
       const populatedPost = await Post.findById(sharedPost._id)
         .populate('author', 'username fullName avatar')
         .populate('share.originalPost', 'author content media')
-        .populate('share.originalAuthor', 'username fullName avatar');
+        .populate('share.originalAuthor', 'username fullName avatar')
+        .populate('groupId', 'name avatar');
 
       return populatedPost;
     } catch (error) {
@@ -500,9 +569,7 @@ class PostService {
     }
   }
 
-  /**
-   * Ghim bài viết
-   */
+  // Ghim bài viết
   async pinPost(postId, userId) {
     try {
       const post = await Post.findById(postId);
@@ -528,9 +595,7 @@ class PostService {
     }
   }
 
-  /**
-   * Bỏ ghim bài viết
-   */
+  // Bỏ ghim bài viết
   async unpinPost(postId, userId) {
     try {
       const post = await Post.findById(postId);
@@ -551,9 +616,7 @@ class PostService {
     }
   }
 
-  /**
-   * Lấy bài viết theo hashtag
-   */
+  // Lấy bài viết theo hashtag
   async getPostsByHashtag(hashtag, page = 1, limit = 20) {
     try {
       const skip = (page - 1) * limit;
@@ -588,46 +651,7 @@ class PostService {
     }
   }
 
-  /**
-   * Lấy bài viết của người dùng
-   */
-  async getUserPosts(userId, page = 1, limit = 20) {
-    try {
-      const skip = (page - 1) * limit;
-
-      const posts = await Post.find({
-        author: userId,
-        isDeleted: false,
-        isApproved: true,
-      })
-        .populate('author', 'username fullName avatar')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit);
-
-      const total = await Post.countDocuments({
-        author: userId,
-        isDeleted: false,
-        isApproved: true,
-      });
-
-      return {
-        posts,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Báo cáo bài viết
-   */
+  // Báo cáo bài viết
   async reportPost(postId, userId, reason, description = '') {
     try {
       const post = await Post.findById(postId);

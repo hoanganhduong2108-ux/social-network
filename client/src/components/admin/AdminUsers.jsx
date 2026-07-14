@@ -22,8 +22,8 @@ const AdminUsers = () => {
       const response = await api.get('/admin/users', {
         params: { page, limit: 20, search: searchTerm },
       });
-      setUsers(response.data.users || []);
-      setTotalPages(response.data.pagination?.pages || 1);
+      setUsers(response.users || []);
+      setTotalPages(response.pagination?.pages || 1);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Không thể tải danh sách người dùng');

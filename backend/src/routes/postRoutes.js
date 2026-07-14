@@ -1,3 +1,8 @@
+// ============================================
+// FILE: backend/src/routes/postRoutes.js
+// MÔ TẢ: Routes quản lý bài viết - THÊM ROUTE NHÓM
+// ============================================
+
 const express = require('express');
 const router = express.Router();
 const postController = require('../controllers/postController');
@@ -14,8 +19,11 @@ const postValidation = [
 ];
 
 // ============================================
-// QUAN TRỌNG: Route có tham số động (/user/:userId) ĐẶT TRƯỚC route /:id
+// ROUTE CÓ THAM SỐ ĐỘNG ĐẶT TRƯỚC
 // ============================================
+
+// Lấy bài viết trong nhóm
+router.get('/group/:groupId', protect, postController.getGroupPosts);
 
 // Lấy bài viết của người dùng theo userId
 router.get('/user/:userId', protect, postController.getUserPosts);
@@ -26,7 +34,7 @@ router.get('/feed', protect, postController.getNewsFeed);
 // Tạo bài viết mới
 router.post('/', protect, upload.array('media', 10), postValidation, postController.createPost);
 
-// Lấy bài viết theo ID (PHẢI ĐẶT SAU /user/:userId)
+// Lấy bài viết theo ID (PHẢI ĐẶT SAU /group/:groupId và /user/:userId)
 router.get('/:id', protect, postController.getPostById);
 
 // Cập nhật bài viết

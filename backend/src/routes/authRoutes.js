@@ -41,6 +41,9 @@ const loginValidation = [
 // ============================================
 router.post('/register', registerValidation, authController.register);
 router.post('/login', loginValidation, authController.login);
+router.get('/me', protect, (req, res) => {
+  res.json({ success: true, user: req.user });
+});
 router.post('/logout', protect, authController.logout);
 router.post('/change-password', protect, authController.changePassword);
 router.post('/forgot-password', authController.forgotPassword);

@@ -17,6 +17,7 @@ import {
   FiFlag,
   FiSettings,
   FiHelpCircle,
+  FiPlusCircle, // Thêm icon cho Nhóm
 } from 'react-icons/fi';
 
 const Sidebar = ({ isOpen }) => {
@@ -29,7 +30,10 @@ const Sidebar = ({ isOpen }) => {
     { icon: FiUsers, label: 'Bạn bè', path: '/friends' },
     { icon: FiMessageSquare, label: 'Tin nhắn', path: '/messages' },
     { icon: FiBell, label: 'Thông báo', path: '/notifications' },
-    { icon: FiFlag, label: 'Trang', path: '/pages' },
+    // ============================================
+    // ĐỔI "Trang" THÀNH "Nhóm"
+    // ============================================
+    { icon: FiPlusCircle, label: 'Nhóm', path: '/groups' }, // Đã sửa
   ];
 
   const bottomItems = [

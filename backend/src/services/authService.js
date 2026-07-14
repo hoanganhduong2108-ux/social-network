@@ -5,6 +5,7 @@
 
 const User = require('../models/User');
 const { generateToken } = require('../utils/jwt');
+const Admin = require('../models/Admin');
 const bcrypt = require('bcryptjs');
 
 class AuthService {
@@ -54,6 +55,37 @@ class AuthService {
     try {
       console.log('🔐 Login service started...');
       console.log('🔐 emailOrUsername:', emailOrUsername);
+
+      const admin = await Admin.findOne({
+        $or: [
+          { email: { $regex: `^${emailOrUsername}$`, $options: 'i' } },
+          { username: { $regex: `^${emailOrUsername}$`, $options: 'i' } },
+        ],
+      }).select('+password');
+
+      if (admin) {
+        if (!admin.isActive || admin.isBanned) {
+          throw new Error('Tài khoản quản trị đã bị khóa');
+        }
+
+        if (!(await admin.matchPassword(password))) {
+          throw new Error('Mật khẩu không chính xác');
+        }
+
+        admin.lastLogin = new Date();
+        admin.loginCount += 1;
+        await admin.save();
+
+        const adminResponse = admin.toObject();
+        delete adminResponse.password;
+        adminResponse.role = admin.role;
+
+        return {
+          success: true,
+          user: adminResponse,
+          token: generateToken({ id: admin._id, role: admin.role }),
+        };
+      }
 
       const user = await User.findOne({
         $or: [

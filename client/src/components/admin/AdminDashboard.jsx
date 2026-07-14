@@ -1,10 +1,10 @@
 // ============================================
 // FILE: src/components/admin/AdminDashboard.jsx
-// MÔ TẢ: Bảng điều khiển quản trị
+// MÔ TẢ: Bảng điều khiển quản trị - THÊM NÚT CHUYỂN USER
 // ============================================
 
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { api } from '../../services/api';
 import Loading from '../common/Loading';
@@ -18,12 +18,16 @@ import {
   FiFileText,
   FiFlag,
   FiSettings,
-  FiBarChart2,
-  FiActivity,
+  FiUserCheck,
+  FiLogOut,
+  FiShield,
 } from 'react-icons/fi';
+import { useAuth } from '../../hooks/useAuth';
 
 const AdminDashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +35,7 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         const response = await api.get('/admin/stats');
-        setStats(response.data);
+        setStats(response.stats);
       } catch (error) {
         console.error('Error fetching admin stats:', error);
       } finally {
@@ -46,10 +50,20 @@ const AdminDashboard = () => {
     { path: '/admin/users', icon: FiUsers, label: 'Người dùng' },
     { path: '/admin/posts', icon: FiFileText, label: 'Bài viết' },
     { path: '/admin/reports', icon: FiFlag, label: 'Báo cáo' },
-    { path: '/admin/analytics', icon: FiBarChart2, label: 'Phân tích' },
-    { path: '/admin/activity', icon: FiActivity, label: 'Hoạt động' },
     { path: '/admin/settings', icon: FiSettings, label: 'Cài đặt' },
   ];
+
+  // ============================================
+  // CHUYỂN SANG GIAO DIỆN NGƯỜI DÙNG
+  // ============================================
+  const handleSwitchToUser = () => {
+    navigate('/user');
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   if (loading) {
     return <Loading text="Đang tải dữ liệu..." fullScreen />;
@@ -57,23 +71,42 @@ const AdminDashboard = () => {
 
   const isActive = (path) => {
     if (path === '/admin') {
-      return location.pathname === path;
+      return location.pathname === path || location.pathname === '/admin/';
     }
     return location.pathname.startsWith(path);
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-100 dark:bg-[#18191A] p-4 md:p-6">
       <Helmet>
-        <title>Quản trị - VibeSpace</title>
+        <title>Quản trị - DRK</title>
       </Helmet>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+        {/* ===== SIDEBAR ===== */}
         <div className="lg:w-64 flex-shrink-0">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sticky top-20">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-              Quản trị
-            </h2>
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <FiShield className="text-[#0866FF]" />
+                Quản trị DRK
+              </h2>
+              <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full">
+                {user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+              </span>
+            </div>
+
+            {/* ============================================ */}
+            {/* NÚT CHUYỂN SANG GIAO DIỆN NGƯỜI DÙNG */}
+            {/* ============================================ */}
+            <button
+              onClick={handleSwitchToUser}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 mb-4 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+            >
+              <FiUserCheck className="w-4 h-4" />
+              Chuyển sang giao diện người dùng
+            </button>
+
             <nav className="space-y-1">
               {menuItems.map((item) => (
                 <Link
@@ -90,9 +123,25 @@ const AdminDashboard = () => {
                 </Link>
               ))}
             </nav>
+
+            <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <FiLogOut className="w-5 h-5" />
+                <span>Đăng xuất</span>
+              </button>
+            </div>
+
+            <div className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
+              <p>DRK v1.0.0 · Admin Mode</p>
+              <p className="mt-0.5">Đang đăng nhập với: {user?.fullName}</p>
+            </div>
           </div>
         </div>
 
+        {/* ===== CONTENT ===== */}
         <div className="flex-1">
           <Routes>
             <Route path="/" element={<AdminOverview stats={stats} />} />
@@ -103,7 +152,7 @@ const AdminDashboard = () => {
           </Routes>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

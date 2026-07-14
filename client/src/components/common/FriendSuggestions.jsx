@@ -16,10 +16,32 @@ const FriendSuggestions = () => {
   useEffect(() => {
     const fetchSuggestions = async () => {
       try {
+        console.log('📖 Fetching friend suggestions...');
         const response = await api.get('/users/suggestions/friends');
-        setSuggestions(response.data.suggestions || []);
+        console.log('📖 Suggestions response:', response);
+        
+        // ============================================
+        // XỬ LÝ RESPONSE ĐÚNG CẤU TRÚC
+        // ============================================
+        let suggestionsData = [];
+        
+        if (response && response.suggestions) {
+          suggestionsData = response.suggestions;
+        } else if (response && Array.isArray(response)) {
+          suggestionsData = response;
+        } else if (response && response.data && Array.isArray(response.data)) {
+          suggestionsData = response.data;
+        } else if (response && response.success && Array.isArray(response.suggestions)) {
+          suggestionsData = response.suggestions;
+        } else {
+          suggestionsData = response?.suggestions || response?.data || [];
+        }
+        
+        console.log('📖 Suggestions data:', suggestionsData);
+        setSuggestions(suggestionsData);
+        
       } catch (error) {
-        console.error('Error fetching suggestions:', error);
+        console.error('❌ Error fetching suggestions:', error);
         setSuggestions([]);
       } finally {
         setLoading(false);
@@ -28,6 +50,9 @@ const FriendSuggestions = () => {
     fetchSuggestions();
   }, []);
 
+  // ============================================
+  // XỬ LÝ GỬI LỜI MỜI KẾT BẠN
+  // ============================================
   const handleSendFriendRequest = async (userId) => {
     try {
       await api.post(`/users/friends/request/${userId}`);
@@ -38,11 +63,14 @@ const FriendSuggestions = () => {
         )
       );
     } catch (error) {
-      console.error('Error sending friend request:', error);
+      console.error('❌ Error sending friend request:', error);
       toast.error('Không thể gửi lời mời');
     }
   };
 
+  // ============================================
+  // RENDER LOADING
+  // ============================================
   if (loading) {
     return (
       <div className="card">
@@ -62,10 +90,16 @@ const FriendSuggestions = () => {
     );
   }
 
-  if (suggestions.length === 0) {
+  // ============================================
+  // RENDER KHÔNG CÓ GỢI Ý
+  // ============================================
+  if (!suggestions || suggestions.length === 0) {
     return null;
   }
 
+  // ============================================
+  // RENDER CHÍNH
+  // ============================================
   return (
     <div className="card">
       <h3 className="font-semibold text-gray-900 dark:text-white mb-3">

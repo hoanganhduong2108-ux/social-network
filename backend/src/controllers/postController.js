@@ -1,13 +1,13 @@
 // ============================================
 // FILE: backend/src/controllers/postController.js
-// MÔ TẢ: Controller quản lý bài viết - SỬA LỖI MEDIA
+// MÔ TẢ: Controller quản lý bài viết - THÊM GROUP ID
 // ============================================
 
 const postService = require('../services/postService');
 const { validationResult } = require('express-validator');
 
 class PostController {
-  // Tạo bài viết mới - SỬA LỖI XỬ LÝ MEDIA
+  // Tạo bài viết mới - THÊM groupId
   async createPost(req, res, next) {
     try {
       console.log('📝 Creating post...');
@@ -23,12 +23,8 @@ class PostController {
         });
       }
 
-      // ============================================
-      // XỬ LÝ MEDIA TỪ BODY (ĐÃ UPLOAD TRƯỚC)
-      // ============================================
+      // Xử lý media từ body
       let mediaData = [];
-      
-      // Kiểm tra media từ body (client gửi dạng JSON)
       if (req.body.media) {
         try {
           let parsedMedia = req.body.media;
@@ -50,11 +46,8 @@ class PostController {
         }
       }
 
-      // Nếu không có media từ body, lấy từ files upload (multer)
+      // Nếu không có media từ body, lấy từ files upload
       if (mediaData.length === 0 && req.files && req.files.length > 0) {
-        console.log(`📷 Processing ${req.files.length} files from upload`);
-        // Trường hợp này để xử lý nếu client gửi file trực tiếp
-        // Thường thì client đã upload trước qua /api/upload
         mediaData = req.files.map(file => ({
           type: file.mimetype?.startsWith('video') ? 'video' : 'image',
           url: `/uploads/${file.mimetype?.startsWith('video') ? 'videos' : 'images'}/${file.filename}`,
@@ -63,8 +56,6 @@ class PostController {
           size: file.size,
         }));
       }
-
-      console.log(`📷 Final media count: ${mediaData.length}`);
 
       // Xử lý audio
       let audioData = null;
@@ -78,6 +69,11 @@ class PostController {
         }
       }
 
+      // ============================================
+      // LẤY groupId TỪ BODY NẾU CÓ
+      // ============================================
+      const groupId = req.body.groupId || null;
+
       const postData = {
         content: req.body.content || '',
         media: mediaData,
@@ -90,6 +86,7 @@ class PostController {
         hashtags: req.body.hashtags || [],
         mentions: req.body.mentions || [],
         type: req.body.type || (mediaData.length > 0 && mediaData[0].type === 'video' ? 'video' : 'status'),
+        groupId: groupId,
       };
 
       console.log('📝 Post data:', JSON.stringify(postData, null, 2));
@@ -97,7 +94,7 @@ class PostController {
       const post = await postService.createPost(req.user.id, postData);
       
       console.log('✅ Post created:', post._id);
-      console.log('✅ Post media count:', post.media?.length || 0);
+      console.log('✅ Post groupId:', post.groupId);
 
       res.status(201).json({
         success: true,
@@ -106,6 +103,33 @@ class PostController {
       });
     } catch (error) {
       console.error('❌ Create post error:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Lấy bài viết trong nhóm
+   */
+  async getGroupPosts(req, res, next) {
+    try {
+      const { groupId } = req.params;
+      const { page = 1, limit = 10 } = req.query;
+
+      console.log(`📖 Fetching posts for group: ${groupId}`);
+      
+      const result = await postService.getGroupPosts(
+        groupId,
+        parseInt(page),
+        parseInt(limit)
+      );
+      
+      res.json({
+        success: true,
+        posts: result.posts,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      console.error('❌ Error fetching group posts:', error);
       next(error);
     }
   }
@@ -151,7 +175,7 @@ class PostController {
     }
   }
 
-  // Lấy bảng tin
+  // Lấy bảng tin - KHÔNG LẤY BÀI VIẾT NHÓM
   async getNewsFeed(req, res, next) {
     try {
       const { page = 1, limit = 10 } = req.query;
