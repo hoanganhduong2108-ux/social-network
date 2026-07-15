@@ -1,6 +1,6 @@
 // ============================================
 // FILE: src/components/feed/CreatePost.jsx
-// MÔ TẢ: Component tạo bài viết - CÓ groupId
+// MÔ TẢ: Component tạo bài viết - SỬA LỖI UPLOAD
 // ============================================
 
 import React, { useState, useRef } from 'react';
@@ -47,9 +47,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
   const [tempStartTime, setTempStartTime] = useState(0);
   const [tempEndTime, setTempEndTime] = useState(0);
   
-  // ============================================
-  // STATE CHO DRAG HANDLES
-  // ============================================
   const [isDraggingStart, setIsDraggingStart] = useState(false);
   const [isDraggingEnd, setIsDraggingEnd] = useState(false);
   
@@ -60,8 +57,14 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
   const trimContainerRef = useRef(null);
 
   // ============================================
-  // LẤY URL MEDIA
+  // GIỚI HẠN KÍCH THƯỚC FILE
   // ============================================
+  const MAX_FILE_SIZE = {
+    image: 100 * 1024 * 1024,   // 100MB
+    video: 10000 * 1024 * 1024,  // 10000MB
+    audio: 100 * 1024 * 1024,   // 100MB
+  };
+
   const getMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -69,7 +72,56 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
   };
 
   // ============================================
-  // XỬ LÝ CHỌN FILE
+  // HÀM NÉN ẢNH TRƯỚC KHI UPLOAD
+  // ============================================
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          const MAX_WIDTH = 1920;
+          const MAX_HEIGHT = 1080;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((blob) => {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          }, 'image/jpeg', 0.85);
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  };
+
+  // ============================================
+  // XỬ LÝ CHỌN FILE - CÓ NÉN ẢNH
   // ============================================
   const handleFileSelect = async (e, type) => {
     const files = Array.from(e.target.files);
@@ -80,8 +132,11 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
 
     try {
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        let file = files[i];
         
+        // ============================================
+        // KIỂM TRA LOẠI FILE
+        // ============================================
         if (type === 'image' && !file.type.startsWith('image/')) {
           toast.error(`"${file.name}" không phải là ảnh`);
           continue;
@@ -91,7 +146,35 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
           continue;
         }
 
-        const response = await uploadFile(file, (progress) => {
+        // ============================================
+        // KIỂM TRA KÍCH THƯỚC FILE
+        // ============================================
+        let maxSize = type === 'image' ? MAX_FILE_SIZE.image : 
+                      type === 'video' ? MAX_FILE_SIZE.video : MAX_FILE_SIZE.audio;
+        
+        if (file.size > maxSize) {
+          const sizeInMB = (maxSize / (1024 * 1024)).toFixed(0);
+          toast.error(`"${file.name}" quá lớn (tối đa ${sizeInMB}MB)`);
+          continue;
+        }
+
+        // ============================================
+        // NÉN ẢNH TRƯỚC KHI UPLOAD
+        // ============================================
+        let fileToUpload = file;
+        if (type === 'image' && file.size > 5 * 1024 * 1024) { // Nén nếu > 5MB
+          try {
+            fileToUpload = await compressImage(file);
+            console.log(`🔄 Compressed: ${(file.size / (1024 * 1024)).toFixed(2)}MB → ${(fileToUpload.size / (1024 * 1024)).toFixed(2)}MB`);
+          } catch (err) {
+            console.warn('Không thể nén ảnh, sử dụng file gốc:', err);
+          }
+        }
+
+        // ============================================
+        // UPLOAD FILE
+        // ============================================
+        const response = await uploadFile(fileToUpload, (progress) => {
           const totalProgress = Math.round(((i + progress / 100) / files.length) * 100);
           setUploadProgress(totalProgress);
         });
@@ -102,7 +185,7 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
           publicId: response.publicId,
           filename: file.name,
           duration: response.duration || 0,
-          size: response.size || file.size,
+          size: response.size || fileToUpload.size,
         };
         setMedia(prev => [...prev, newMedia]);
       }
@@ -110,7 +193,15 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
       toast.success(`Đã thêm ${files.length} file`);
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error(error.response?.data?.message || 'Không thể upload file');
+      
+      // ============================================
+      // XỬ LÝ LỖI TIMEOUT
+      // ============================================
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        toast.error('Upload quá lâu, vui lòng thử lại với file nhỏ hơn');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể upload file');
+      }
     } finally {
       setLoading(false);
       setUploadProgress(0);
@@ -127,6 +218,13 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
 
     if (!file.type.startsWith('audio/')) {
       toast.error('Vui lòng chọn file âm thanh');
+      e.target.value = '';
+      return;
+    }
+
+    // Kiểm tra kích thước audio
+    if (file.size > MAX_FILE_SIZE.audio) {
+      toast.error(`File âm thanh quá lớn (tối đa ${MAX_FILE_SIZE.audio / (1024 * 1024)}MB)`);
       e.target.value = '';
       return;
     }
@@ -148,7 +246,11 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
       setShowAudioTrim(true);
     } catch (error) {
       console.error('Audio upload error:', error);
-      toast.error('Không thể upload âm thanh');
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        toast.error('Upload âm thanh quá lâu, vui lòng thử lại');
+      } else {
+        toast.error('Không thể upload âm thanh');
+      }
     } finally {
       setLoading(false);
     }
@@ -318,7 +420,7 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
   };
 
   // ============================================
-  // XỬ LÝ SUBMIT - THÊM groupId
+  // XỬ LÝ SUBMIT
   // ============================================
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -333,9 +435,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
     try {
       console.log('📝 Submitting post...');
       console.log('📝 groupId:', groupId);
-      console.log('📝 Content:', content);
-      console.log('📝 Media:', media);
-      console.log('📝 Audio:', audio);
 
       const postData = {
         content: content.trim(),
@@ -359,32 +458,21 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
           name: audio.name,
           duration: audio.duration || 0,
         } : null,
-        // ============================================
-        // THÊM groupId NẾU CÓ
-        // ============================================
         groupId: groupId || null,
       };
-
-      console.log('📝 Post data:', postData);
 
       let response;
       if (editingPost) {
         response = await api.put(`/posts/${editingPost._id}`, postData);
-        console.log('✅ Update response:', response);
         toast.success('Đã cập nhật bài viết!');
-        
         const updatedPost = response.post || response;
         if (onPostCreated) {
           onPostCreated(updatedPost);
         }
       } else {
         response = await api.post('/posts', postData);
-        console.log('✅ Create response:', response);
         toast.success('Đã đăng bài viết thành công!');
-        
         const newPost = response.post || response;
-        console.log('📝 New post:', newPost);
-        console.log('📝 New post media:', newPost.media);
         
         setContent('');
         setMedia([]);
@@ -402,7 +490,6 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
       if (onCancelEdit) onCancelEdit();
     } catch (error) {
       console.error('❌ Error creating post:', error);
-      console.error('❌ Error details:', error.response?.data);
       toast.error(error.response?.data?.message || 'Không thể đăng bài viết');
     } finally {
       setLoading(false);
@@ -534,10 +621,11 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
   };
 
   // ============================================
-  // RENDER
+  // RENDER CHÍNH
   // ============================================
   return (
     <div className="bg-white dark:bg-[#242526] rounded-xl shadow-sm border border-gray-200 dark:border-[#3E4042] transition-colors duration-200 overflow-hidden">
+      {/* Header */}
       <div className="p-4 pb-0">
         <div className="flex items-center gap-3">
           <img
@@ -563,7 +651,9 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
         </div>
       </div>
 
+      {/* Form */}
       <form onSubmit={handleSubmit}>
+        {/* Content */}
         <div className="px-4">
           <textarea
             value={content}
@@ -574,6 +664,7 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
           />
         </div>
 
+        {/* Media preview */}
         {media.length > 0 && (
           <div className="px-4 pb-2">
             <div className="grid grid-cols-2 gap-2">
@@ -610,6 +701,7 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
           </div>
         )}
 
+        {/* Audio */}
         {audio && (
           <div className="px-4 pb-2">
             <div className="p-3 bg-gray-100 dark:bg-[#18191A] rounded-lg border border-gray-200 dark:border-[#3E4042]">
@@ -715,6 +807,7 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
           </div>
         )}
 
+        {/* Upload progress */}
         {loading && uploadProgress > 0 && uploadProgress < 100 && (
           <div className="px-4 pb-2">
             <div className="p-2 bg-gray-100 dark:bg-[#18191A] rounded-lg">
@@ -732,6 +825,7 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
           </div>
         )}
 
+        {/* Actions */}
         <div className="px-4 pb-2 pt-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -842,6 +936,7 @@ const CreatePost = ({ onPostCreated, editingPost = null, onCancelEdit = null, gr
           </div>
         </div>
 
+        {/* Editor */}
         {showEditor && (
           <div className="p-4 border-t border-gray-200 dark:border-[#3E4042] bg-gray-50 dark:bg-[#18191A]">
             <div className="flex items-center gap-3 mb-3">

@@ -1,10 +1,19 @@
 // ============================================
 // FILE: backend/src/controllers/uploadController.js
-// MÔ TẢ: Controller upload - SỬA LỖI
+// MÔ TẢ: Controller upload - SỬA LỖI TIMEOUT VÀ KÍCH THƯỚC
 // ============================================
 
 const path = require('path');
 const fs = require('fs');
+
+// ============================================
+// GIỚI HẠN KÍCH THƯỚC FILE (bytes)
+// ============================================
+const MAX_FILE_SIZE = {
+  image: 100 * 1024 * 1024,   // 100MB
+  video: 10000 * 1024 * 1024,  // 10000MB
+  audio: 100 * 1024 * 1024,   // 100MB
+};
 
 class UploadController {
   async uploadFile(req, res, next) {
@@ -15,6 +24,28 @@ class UploadController {
         return res.status(400).json({
           success: false,
           message: 'Vui lòng chọn file',
+        });
+      }
+
+      // ============================================
+      // KIỂM TRA KÍCH THƯỚC FILE THEO LOẠI
+      // ============================================
+      let maxSize = MAX_FILE_SIZE.image;
+      let fileType = 'image';
+      
+      if (req.file.mimetype.startsWith('video/')) {
+        maxSize = MAX_FILE_SIZE.video;
+        fileType = 'video';
+      } else if (req.file.mimetype.startsWith('audio/')) {
+        maxSize = MAX_FILE_SIZE.audio;
+        fileType = 'audio';
+      }
+
+      if (req.file.size > maxSize) {
+        const sizeInMB = (maxSize / (1024 * 1024)).toFixed(0);
+        return res.status(400).json({
+          success: false,
+          message: `Kích thước file quá lớn. Tối đa ${sizeInMB}MB cho file ${fileType}`,
         });
       }
 
@@ -29,19 +60,22 @@ class UploadController {
       }
 
       const fileUrl = `/uploads/${subFolder}${path.basename(req.file.path)}`;
-      const fileType = req.file.mimetype.startsWith('video/') ? 'video' : 
-                       req.file.mimetype.startsWith('audio/') ? 'audio' : 'image';
+      const responseType = req.file.mimetype.startsWith('video/') ? 'video' : 
+                           req.file.mimetype.startsWith('audio/') ? 'audio' : 'image';
 
       console.log(`✅ File uploaded: ${req.file.originalname}`);
       console.log(`📁 File URL: ${fileUrl}`);
-      console.log(`📁 File type: ${fileType}`);
-      console.log(`📁 File size: ${req.file.size} bytes`);
+      console.log(`📁 File type: ${responseType}`);
+      console.log(`📁 File size: ${(req.file.size / (1024 * 1024)).toFixed(2)} MB`);
 
+      // ============================================
+      // TRẢ VỀ RESPONSE THÀNH CÔNG
+      // ============================================
       res.json({
         success: true,
         url: fileUrl,
         publicId: req.file.filename,
-        type: fileType,
+        type: responseType,
         filename: req.file.originalname,
         mimetype: req.file.mimetype,
         size: req.file.size,
@@ -64,6 +98,39 @@ class UploadController {
           success: false,
           message: 'Vui lòng chọn file',
         });
+      }
+
+      // ============================================
+      // KIỂM TRA TỔNG KÍCH THƯỚC
+      // ============================================
+      const totalSize = req.files.reduce((sum, f) => sum + f.size, 0);
+      const maxTotalSize = 10 * 1024 * 1024 * 1024; // 10GB
+      
+      if (totalSize > maxTotalSize) {
+        return res.status(400).json({
+          success: false,
+          message: `Tổng kích thước các file quá lớn (tối đa ${maxTotalSize / (1024 * 1024 * 1024)}GB)`,
+        });
+      }
+
+      // ============================================
+      // KIỂM TRA TỪNG FILE
+      // ============================================
+      for (const file of req.files) {
+        let maxSize = MAX_FILE_SIZE.image;
+        if (file.mimetype.startsWith('video/')) {
+          maxSize = MAX_FILE_SIZE.video;
+        } else if (file.mimetype.startsWith('audio/')) {
+          maxSize = MAX_FILE_SIZE.audio;
+        }
+        
+        if (file.size > maxSize) {
+          const sizeInMB = (maxSize / (1024 * 1024)).toFixed(0);
+          return res.status(400).json({
+            success: false,
+            message: `File "${file.originalname}" quá lớn. Tối đa ${sizeInMB}MB`,
+          });
+        }
       }
 
       const files = req.files.map((file) => {
@@ -97,7 +164,7 @@ class UploadController {
         message: 'Upload thành công',
       });
     } catch (error) {
-      console.error('Upload multiple error:', error);
+      console.error('❌ Upload multiple error:', error);
       res.status(500).json({
         success: false,
         message: error.message || 'Lỗi upload file',
@@ -138,7 +205,7 @@ class UploadController {
         message: deleted ? 'Xóa file thành công' : 'Không tìm thấy file',
       });
     } catch (error) {
-      console.error('Delete file error:', error);
+      console.error('❌ Delete file error:', error);
       res.status(500).json({
         success: false,
         message: error.message || 'Lỗi xóa file',
