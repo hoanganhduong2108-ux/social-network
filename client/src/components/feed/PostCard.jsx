@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
+import { getMediaUrl } from '../../utils/media'; 
 import { timeAgo } from '../../utils/helpers';
 import {
   FiHeart,

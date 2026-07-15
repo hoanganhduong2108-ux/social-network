@@ -1,6 +1,6 @@
 // ============================================
 // FILE: src/components/common/FriendSuggestions.jsx
-// MÔ TẢ: Đề xuất bạn bè - CHỈ HIỂN THỊ USER ĐÃ ĐĂNG KÝ
+// MÔ TẢ: Đề xuất bạn bè - SỬA LỖI RESPONSE
 // ============================================
 
 import React, { useState, useEffect } from 'react';
@@ -21,7 +21,7 @@ const FriendSuggestions = () => {
         console.log('📖 Suggestions response:', response);
         
         // ============================================
-        // XỬ LÝ RESPONSE ĐÚNG CẤU TRÚC
+        // XỬ LÝ RESPONSE ĐÚNG CẤU TRÚC - FIX LỖI
         // ============================================
         let suggestionsData = [];
         
@@ -33,8 +33,21 @@ const FriendSuggestions = () => {
           suggestionsData = response.data;
         } else if (response && response.success && Array.isArray(response.suggestions)) {
           suggestionsData = response.suggestions;
+        } else if (response && response.success && response.data && Array.isArray(response.data)) {
+          suggestionsData = response.data;
         } else {
-          suggestionsData = response?.suggestions || response?.data || [];
+          // Fallback: kiểm tra xem response có phải là mảng không
+          if (Array.isArray(response)) {
+            suggestionsData = response;
+          } else {
+            // Tìm kiếm bất kỳ trường nào là mảng
+            for (const key of Object.keys(response || {})) {
+              if (Array.isArray(response[key])) {
+                suggestionsData = response[key];
+                break;
+              }
+            }
+          }
         }
         
         console.log('📖 Suggestions data:', suggestionsData);
@@ -50,9 +63,7 @@ const FriendSuggestions = () => {
     fetchSuggestions();
   }, []);
 
-  // ============================================
-  // XỬ LÝ GỬI LỜI MỜI KẾT BẠN
-  // ============================================
+  // Xử lý gửi lời mời kết bạn
   const handleSendFriendRequest = async (userId) => {
     try {
       await api.post(`/users/friends/request/${userId}`);
@@ -68,9 +79,7 @@ const FriendSuggestions = () => {
     }
   };
 
-  // ============================================
-  // RENDER LOADING
-  // ============================================
+  // Render loading
   if (loading) {
     return (
       <div className="card">
@@ -90,16 +99,12 @@ const FriendSuggestions = () => {
     );
   }
 
-  // ============================================
-  // RENDER KHÔNG CÓ GỢI Ý
-  // ============================================
+  // Không có gợi ý
   if (!suggestions || suggestions.length === 0) {
     return null;
   }
 
-  // ============================================
-  // RENDER CHÍNH
-  // ============================================
+  // Render chính
   return (
     <div className="card">
       <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
