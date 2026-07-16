@@ -9,8 +9,8 @@ import toast from 'react-hot-toast';
 // ============================================
 // CẤU HÌNH URL
 // ============================================
-const API_URL = 'http://localhost:5000/api';
-const MEDIA_URL = 'http://localhost:5000';
+const API_URL = 'http://localhost:5001/api';
+const MEDIA_URL = 'http://localhost:5001';
 
 // ============================================
 // Tạo instance Axios

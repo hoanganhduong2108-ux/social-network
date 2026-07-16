@@ -16,7 +16,7 @@ services:
     container_name: social-backend
     restart: always
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       - NODE_ENV=production
       - PORT=5000
