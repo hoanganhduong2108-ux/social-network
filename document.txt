@@ -1,0 +1,100 @@
+============================================================
+      SOCIAL NETWORK - DOCUMENTATION
+============================================================
+
+1. PROJECT OVERVIEW
+-------------------
+- Tên: DRK Social Network
+- Mô tả: Website mạng xã hội trực tuyến
+- Công nghệ: React, Node.js, Express, MongoDB, Socket.io
+
+2. TECHNOLOGY STACK
+-------------------
+- Frontend: React 18, Tailwind CSS, Vite
+- Backend: Node.js, Express.js
+- Database: MongoDB (NoSQL)
+- Realtime: Socket.io
+- Auth: JWT, bcrypt
+- Media: Cloudinary
+
+3. INSTALLATION
+---------------
+### Backend
+cd backend
+npm install
+npm run dev
+
+### Frontend
+cd client
+npm install
+npm run dev
+
+### Docker
+docker-compose up -d
+
+4. ENVIRONMENT VARIABLES
+------------------------
+### Frontend (.env)
+VITE_API_URL=http://localhost:5000/api
+VITE_SOCKET_URL=http://localhost:5000
+
+### Backend (.env)
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/social_network
+JWT_SECRET=your_secret_key
+JWT_EXPIRE=7d
+CLIENT_URL=http://localhost:5173
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+5. DEPLOYMENT
+-------------
+### Docker Compose
+docker-compose up -d --build
+
+### Manual
+npm run build
+
+6. API ENDPOINTS
+----------------
+POST   /api/auth/register     - Đăng ký
+POST   /api/auth/login        - Đăng nhập
+GET    /api/users/me          - Lấy user hiện tại
+POST   /api/posts             - Tạo bài viết
+GET    /api/posts/feed        - Lấy bảng tin
+POST   /api/groups            - Tạo nhóm
+POST   /api/messages          - Gửi tin nhắn
+
+7. DEFAULT ACCOUNTS
+-------------------
+Username: admin      Password: 123456
+Username: testuser   Password: 123456
+Username: demo       Password: 123456
+
+8. DEPLOYMENT PLATFORMS
+-----------------------
+- Vercel (Frontend): https://vercel.com
+- Render (Backend): https://render.com
+- MongoDB Atlas (Database): https://mongodb.com
+- Docker Hub (Container): https://hub.docker.com
+
+9. TROUBLESHOOTING
+------------------
+### Lỗi kết nối MongoDB
+- Kiểm tra MongoDB đang chạy: mongod
+- Kiểm tra connection string trong .env
+
+### Lỗi CORS
+- Thêm domain vào CLIENT_URL trong .env backend
+
+### Lỗi upload file
+- Kiểm tra thư mục uploads có tồn tại
+- Kiểm tra kích thước file
+
+10. CONTACT
+-----------
+- Developer: Hoàng Minh
+- Email: minh@example.com
+
+============================================================

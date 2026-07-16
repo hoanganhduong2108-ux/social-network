@@ -1,0 +1,97 @@
+# ============================================
+# FILE: docker-compose.yml
+# MÔ TẢ: Docker Compose cho toàn bộ ứng dụng
+# ============================================
+
+version: '3.8'
+
+services:
+  # ============================================
+  # BACKEND - Node.js/Express
+  # ============================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: social-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/social_network
+      - JWT_SECRET=your_super_secret_key_change_this_in_production
+      - JWT_EXPIRE=7d
+      - CLIENT_URL=http://localhost:5173
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend/uploads:/app/uploads
+    networks:
+      - social-network
+
+  # ============================================
+  # FRONTEND - React/Vite
+  # ============================================
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: social-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - social-network
+
+  # ============================================
+  # DATABASE - MongoDB
+  # ============================================
+  mongodb:
+    image: mongo:6
+    container_name: social-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_DATABASE=social_network
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - social-network
+
+  # ============================================
+  # MONGODB EXPRESS - Quản lý database (tùy chọn)
+  # ============================================
+  mongo-express:
+    image: mongo-express:latest
+    container_name: social-mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password123
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    depends_on:
+      - mongodb
+    networks:
+      - social-network
+
+# ============================================
+# VOLUMES
+# ============================================
+volumes:
+  mongodb_data:
+
+# ============================================
+# NETWORKS
+# ============================================
+networks:
+  social-network:
+    driver: bridge
